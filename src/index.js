@@ -10,6 +10,7 @@ import ru from "./languages/ru/ru.json";
 import en from "./languages/en/en.json";
 import {Provider} from "react-redux";
 import {store} from "./redux/store";
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 const App = React.lazy(() => import('./components/app/App'));
 

@@ -1,1024 +1,894 @@
-import { useRef, useState, useContext, useEffect } from "react";
-import { CSSTransition } from "react-transition-group";
-import { useSelector, useDispatch } from "react-redux";
-import ReactStars from "react-stars";
-import { hideModal, showModals } from "../../redux/ModalContent";
-import "./style.scss";
+import {useRef, useState, useMemo, useEffect} from "react";
+import {CSSTransition} from "react-transition-group";
+import {useSelector, useDispatch} from "react-redux";
+import {hideModal, showModals} from "../../redux/ModalContent";
+import PhoneInput from "react-phone-number-input";
+import AuthCode from "react-auth-code-input";
+import {useNavigate} from "react-router-dom";
 import axios from "axios";
-import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
-import { webSockedContext } from "../app/App";
-import { getOrders } from "../../redux/Orders";
-import { addRaidDriver } from "../../redux/RaidDriver";
-import { delAlert, addAlert } from "../../redux/AlertsBox";
+import {GoogleMap, Marker, useLoadScript} from "@react-google-maps/api";
+import {Combobox, ComboboxInput, ComboboxOption} from "@reach/combobox";
 import i18next from "i18next";
-import error from "./sound/error.mp3";
+import {GOOGLE_MAPS_API_KEY} from "./googleMapsApi";
+import {useOnKeyPress} from "./useOnKeyPress";
+import "./style.scss";
+import {addAlert, delAlert} from "../../redux/AlertsBox";
+import {updateDropLocationPickUp} from "../../redux/PickUpLocations";
+import {updateDropLocationDrop} from "../../redux/DropOffLocations";
+import {AddClientInfo} from "../../redux/AddClient";
+import {changePayment} from "../../redux/PaymentType";
+import {useTranslation} from "react-i18next";
+import usePlacesAutocomplete, {getGeocode, getLatLng} from "use-places-autocomplete";
+import "@reach/combobox/styles.css";
+import Loader from "../loader/Loader";
+
+const libraries = ["places"];
 
 const Modal = () => {
-  const baseUrl = useSelector((store) => store.baseUrl.data);
-  const modalContent = useSelector((store) => store.ModalContent.data);
-  const activeOrders = useSelector((store) => store.Orders.activeOrders);
-  const drivers = useSelector((store) => store.DriversList.data);
-  const Raiddriver = useSelector((store) => store.RaidDriver.data);
-  let webSocked = useContext(webSockedContext);
-  const navigate = useNavigate();
-  const { t } = useTranslation();
-  const nodeRef = useRef(null);
-  const dispatch = useDispatch();
-  const [raidCount, setRaidCount] = useState();
-  const [reason, setReason] = useState("");
-  const [add_reason, setAdd_Reason] = useState("");
-  const [cargoId, setCargoId] = useState("");
-  const [many, setMany] = useState(false);
-  const [comment, setComment] = useState("");
-  const [user, setUser] = useState();
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const ordersList = useSelector((store) => store.Orders.data);
-
-  function errorAudio() {
-    new Audio(error).play();
-  }
-
-  const logOut = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("userId");
-    window.location.reload();
-    window.location.pathname = "/";
-  };
-  const showCancel = () => {
-    setCargoId(modalContent.order.id);
-    if (modalContent.order.number_cars > 1) {
-      dispatch(showModals({ show: true, status: "cancel-order-reason" }));
-    } else dispatch(showModals({ show: true, status: "cancel-order" }));
-  };
-  const delOrder = () => {
-    if (reason) {
-      let order = {
-        command: "cancel_order",
-        id: cargoId,
-        reason,
-        many,
-      };
-      webSocked.send(JSON.stringify(order));
-      setReason("");
-      setAdd_Reason("");
-    } else {
-      let idAlert = Date.now();
-      let alert = {
-        id: idAlert,
-        text: t("reasonAlert"),
-        img: "./images/red.svg",
-        color: "#FFEDF1",
-      };
-      dispatch(addAlert(alert));
-      errorAudio();
-      setTimeout(() => {
-        dispatch(delAlert(idAlert));
-      }, 5000);
-    }
-  };
-
-  useEffect(() => {
-    dispatch(getOrders());
-
-    axios
-      .get(`https://api.buyukyol.uz/api/client/`, {
-        headers: {
-          Authorization: `Token ${localStorage.getItem("token")}`,
-        },
-      })
-      .then((response) => {
-        setUser(response.data);
-        setFirstName(response.data.first_name);
-        setLastName(response.data.last_name);
-      })
-      .catch((error) => {
-        if (error.response.statusText == "Unauthorized") {
-          window.location.pathname = "/";
-          localStorage.removeItem("token");
-          localStorage.removeItem("userId");
-        }
-      });
-    return () => {
-      getOrders();
-    };
-  }, []);
-
-  const showModalContent = (order) => {
-    dispatch(showModals({ show: true, status: "order", order }));
-  };
-
-  const sendRaid = (id, did) => {
-    let raidList = {
-      driver: id,
-      delivery: did,
-      mark: raidCount,
-      comment: comment,
-    };
-
-    axios
-      .post(`${baseUrl}api/comment/`, raidList, {
-        headers: {
-          Authorization: `Token ${localStorage.getItem("token")}`,
-        },
-      })
-      .then((response) => {
-        let idAlert = Date.now();
-        let alert = {
-          id: idAlert,
-          text: t("raidDriverText"),
-          img: "./images/green.svg",
-          color: "#EDFFFA",
-        };
-        dispatch(addAlert(alert));
-        setTimeout(() => {
-          dispatch(delAlert(idAlert));
-        }, 5000);
-        dispatch(hideModal({ show: false }));
-
-        let driver = Raiddriver.filter((item, index) => index > 0);
-        dispatch(addRaidDriver(driver));
-      })
-      .catch((error) => {
-        if (error.response.statusText == "Unauthorized") {
-          window.location.pathname = "/";
-          localStorage.removeItem("token");
-          localStorage.removeItem("userId");
-        }
-      });
-  };
-
-  const cancelRaid = (id) => {
-    let cancelRaid = {
-      command: "unrate",
-      id: id,
-    };
-
-    webSocked.send(JSON.stringify(cancelRaid));
-
-    let driver = Raiddriver.filter((item, index) => index > 0);
-    dispatch(addRaidDriver(driver));
-    dispatch(hideModal({ show: false }));
-  };
-
-  const reloadOrder = (id) => {
-    let reloadList = {
-      command: "activate_order",
-      order_id: id,
-    };
-    webSocked.send(JSON.stringify(reloadList));
-  };
-
-  const editUser = () => {
-    if (firstName.trim().length > 0 && lastName.trim().length) {
-      let user = {
-        first_name: firstName,
-        last_name: lastName,
-      };
-
-      axios
-        .patch(`${baseUrl}api/client/1/`, user, {
-          headers: {
-            Authorization: `Token ${localStorage.getItem("token")}`,
-          },
-        })
-        .then((response) => {
-          window.location.reload();
-          dispatch(hideModal({ show: false }));
-        });
-    } else {
-      let idAlert = Date.now();
-      let alert = {
-        id: idAlert,
-        text: t("alert3"),
-        img: "./images/yellow.svg",
-        color: "#FFFAEA",
-      };
-      dispatch(addAlert(alert));
-      setTimeout(() => {
-        dispatch(delAlert(idAlert));
-      }, 5000);
-    }
-  };
-
-  return (
-    <CSSTransition
-      in={modalContent.show || Raiddriver.length > 0}
-      nodeRef={nodeRef}
-      timeout={300}
-      classNames="alert"
-      unmountOnExit
-    >
-      <div
-        className={`modal-sloy ${
-          modalContent.status === "order" ? "align-none" : ""
-        }`}
-      >
-        <div ref={nodeRef} className="modal-card">
-          {modalContent.status === "log-out" && (
-            <div className="confirm">
-              <div className="toptext">{t("modal-title1")}</div>
-              <div className="btns">
-                <button
-                  className="not-out"
-                  onClick={() => dispatch(hideModal({ show: false }))}
-                >
-                  {t("button3")}
-                </button>
-                <button onClick={logOut}>{t("button4")}</button>
-              </div>
-            </div>
-          )}
-
-          {modalContent.status === "order" && modalContent.order && (
-            <div className="show-order">
-              <div className="cancel-btn">
-                <img
-                  onClick={() => dispatch(hideModal({ show: false }))}
-                  src="./images/x.png"
-                  alt=""
-                />
-              </div>
-              <div className="title">{t("moreInfo")}</div>
-
-              <div className="info-direction">
-                <div className="label-info">{t("info1")}</div>
-                <div className="value-info">
-                  {modalContent.order.type === "OUT" ? t("direction2") : ""}
-                  {modalContent.order.type === "IN" ? t("direction3") : ""}
-                  {modalContent.order.type === "Abroad" ? t("direction1") : ""}
-                </div>
-              </div>
-
-              <div className="info">
-                <div className="label-info">{t("order-id")}</div>
-                <div className="value-info"> {modalContent.order.id}</div>
-              </div>
-
-              <div className="info">
-                <div className="label-info">{t("loc1")}</div>
-                <div className="value-info">
-                  {" "}
-                  {modalContent.order.address_from}
-                </div>
-              </div>
-
-              <div className="info">
-                <div className="label-info">{t("loc3")}</div>
-                <div className="value-info">
-                  {" "}
-                  {modalContent.order.address_to}
-                </div>
-              </div>
-
-              <div className="info">
-                <div className="label-info"> {t("info2")}</div>
-                <div className="value-info"> {modalContent.order.cargo}</div>
-              </div>
-
-              <div className="info">
-                <div className="label-info"> {t("info7")}</div>
-                <div className="value-info">
-                  {" "}
-                  {modalContent.order.distance} {t("km")}
-                </div>
-              </div>
-
-              <div className="info">
-                <div className="label-info"> {t("info10")}</div>
-                <div className="value-info">
-                  {modalContent.order.payment_type == "1" ? t("payment1") : ""}
-                  {modalContent.order.payment_type == "2" ? t("payment2") : ""}
-                  {modalContent.order.payment_type == "3" ? t("payment3") : ""}
-                </div>
-              </div>
-
-              <div className="info">
-                <div className="label-info"> {t("info8")}</div>
-                <div className="value-info">
-                  {modalContent.order.negotiable ? (
-                    t("negotiable")
-                  ) : (
-                    <>
-                      {modalContent.order.price} {modalContent.order.currency}
-                    </>
-                  )}
-                </div>
-              </div>
-
-              <div className="info">
-                <div className="label-info"> {t("info3")}</div>
-                <div className="value-info">
-                  {" "}
-                  {modalContent.order.number_cars} {t("infoWaits2")}
-                </div>
-              </div>
-
-              <div className="info">
-                <div className="label-info"> {t("info4")}</div>
-                <div className="value-info">
-                  {modalContent.order.capacity}
-                  &nbsp;
-                  {modalContent.order.unit == "1" ? t("infoWaits1") : ""}
-                  {modalContent.order.unit == "2" ? t("infoWaits2") : ""}
-                  {modalContent.order.unit == "3" ? t("infoWaits3") : ""}
-                  {modalContent.order.unit == "4" ? t("infoWaits4") : ""}
-                  {modalContent.order.unit == "5" ? t("infoWaits5") : ""}
-                  {modalContent.order.unit == "6" ? t("infoWaits6") : ""}
-                </div>
-              </div>
-
-              <div className="info">
-                <div className="label-info">{t("info5")}</div>
-                <div className="value-info">
-                  {modalContent.order.car_category.name !==
-                    "Avto tashuvchi" && (
-                    <>
-                      {modalContent.order.car_category.min_weight
-                        ? modalContent.order.car_category.min_weight
-                        : ""}
-                      -
-                      {modalContent.order.car_category.max_weight
-                        ? modalContent.order.car_category.max_weight
-                        : ""}{" "}
-                      {t("infoWaits4")}, &nbsp;
-                    </>
-                  )}
-
-                  {i18next.language === "uz"
-                    ? modalContent.order.car_category.name
-                    : ""}
-                  {i18next.language === "ru"
-                    ? modalContent.order.car_category.name_ru
-                    : ""}
-                  {i18next.language === "en"
-                    ? modalContent.order.car_category.name_en
-                    : ""}
-                </div>
-              </div>
-
-              <div className="info">
-                <div className="label-info"> {t("info6")}</div>
-                <div className="value-info">
-                  {" "}
-                  {i18next.language === "uz" &&
-                    modalContent.order.car_body_type.name}
-                  {i18next.language === "ru" &&
-                    modalContent.order.car_body_type.name_ru}
-                  {i18next.language === "en" &&
-                    modalContent.order.car_body_type.name_en}
-                </div>
-              </div>
-
-              {modalContent.order.temprature ? (
-                <div className="info">
-                  <div className="label-info"> {t("temprature-name")}</div>
-                  <div className="value-info">
-                    {" "}
-                    {modalContent.order.temprature === "1" && t("temrature1")}
-                    {modalContent.order.temprature === "2" && t("temrature2")}
-                    {modalContent.order.temprature === "3" && t("temrature3")}
-                    {modalContent.order.temprature === "4" && t("temrature4")}
-                    {modalContent.order.temprature === "5" && t("temrature5")}
-                    {modalContent.order.temprature === "6" && t("temrature6")}
-                  </div>
-                </div>
-              ) : (
-                ""
-              )}
-
-              {modalContent.order.avans ? (
-                <div className="info">
-                  <div className="label-info"> {t("info9")}</div>
-                  <div className="value-info">
-                    {" "}
-                    {modalContent.order.avans} {modalContent.order.currency}
-                  </div>
-                </div>
-              ) : (
-                ""
-              )}
-
-              {modalContent.order.wait_cost ? (
-                <div className="info">
-                  <div className="label-info"> {t("info11")}</div>
-
-                  <div className="value-info">
-                    {modalContent.order.wait_cost} {modalContent.order.currency}
-                  </div>
-                </div>
-              ) : (
-                ""
-              )}
-
-              {modalContent.order.load_time ? (
-                <div className="info">
-                  <div className="label-info"> {t("info12")}</div>
-                  <div className="value-info">
-                    {modalContent.order.load_time.slice(0, 10)},
-                    {modalContent.order.load_time.slice(11, 16)}
-                  </div>
-                </div>
-              ) : (
-                ""
-              )}
-
-              {modalContent.order.start_time ? (
-                <div className="info">
-                  <div className="label-info"> {t("info13")}</div>
-                  <div className="value-info">
-                    {modalContent.order.start_time.slice(0, 10)},
-                    {modalContent.order.start_time.slice(11, 16)}
-                  </div>
-                </div>
-              ) : (
-                ""
-              )}
-
-              {modalContent.order.status === "Delivered" ? (
-                <div className="info-direction">
-                  <div className="label-info"> {t("timeCargo2")}</div>
-                  <div className="value-info">
-                    {modalContent.order.ordered_time.slice(0, 10)},
-                    {modalContent.order.ordered_time.slice(11, 16)}
-                  </div>
-                </div>
-              ) : (
-                ""
-              )}
-
-              {modalContent.order.rejected_reason ? (
-                <div className="info">
-                  <div className="reason-title">{t("reasonOrder")}:</div>
-                  <div className="value-info-reason">
-                    {modalContent.order.rejected_reason === "Fikrim o'zgardi"
-                      ? t("reason1")
-                      : modalContent.order.rejected_reason ===
-                        "Xato ma'lumot kiritibman"
-                      ? t("reason2")
-                      : modalContent.order.rejected_reason ===
-                        "Haydovchi bekor qilishni so'radi"
-                      ? t("reason3")
-                      : modalContent.order.rejected_reason}
-                  </div>
-                </div>
-              ) : (
-                ""
-              )}
-
-              {modalContent.order.status === "Delivered" ||
-              modalContent.order.status === "Rejected" ? (
-                ""
-              ) : (
-                <div onClick={showCancel} className="cancel-order">
-                  {t("button3")}
-                </div>
-              )}
-
-              {modalContent.order.status === "Rejected" ? (
-                <div
-                  onClick={() => reloadOrder(modalContent.order.id)}
-                  className="reload-order"
-                >
-                  {t("button8")}
-                </div>
-              ) : (
-                ""
-              )}
-            </div>
-          )}
-
-          {modalContent.status === "cancel-order" && (
-            <div className="cancel-order">
-              <div className="cancel-btn">
-                <img
-                  onClick={() => dispatch(hideModal({ show: false }))}
-                  src="./images/x.png"
-                  alt=""
-                />
-              </div>
-
-              <div className="title">{t("reasonText")}</div>
-
-              <div className="cancel-order-info">
-                <div>
-                  <input
-                    onChange={(e) => {
-                      setReason(e.target.value);
-                    }}
-                    id="reason1"
-                    type="radio"
-                    name="money"
-                    value="Fikrim o'zgardi"
-                  />
-                  <label htmlFor="reason1">{t("reason1")}</label>
-                </div>
-
-                <div>
-                  <input
-                    onChange={(e) => {
-                      setReason(e.target.value);
-                    }}
-                    id="reason2"
-                    type="radio"
-                    name="money"
-                    value="Xato ma'lumot kiritibman"
-                  />
-                  <label htmlFor="reason2">{t("reason2")}</label>
-                </div>
-
-                <div>
-                  <input
-                    onChange={(e) => {
-                      setReason(e.target.value);
-                    }}
-                    id="reason3"
-                    type="radio"
-                    name="money"
-                    value="Haydovchi bekor qilishni so'radi"
-                  />
-                  <label htmlFor="reason3">{t("reason3")}</label>
-                </div>
-
-                <div>
-                  <input
-                    onChange={(e) => {
-                      setReason(e.target.value);
-                    }}
-                    id="reason5"
-                    type="radio"
-                    name="money"
-                    value={add_reason}
-                  />
-                  <label htmlFor="reason3">
-                    <input
-                      placeholder={t("reason4")}
-                      onChange={(e) => setAdd_Reason(e.target.value)}
-                      id="reason4"
-                      type="text"
-                      name="money"
-                    />
-                  </label>
-                </div>
-
-                <div onClick={delOrder} className="cancel-btn">
-                  {t("button2")}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {modalContent.status === "cancel-order-reason" && (
-            <div className="cancel-order">
-              <div className="cancel-btn">
-                <img
-                  onClick={() => dispatch(hideModal({ show: false }))}
-                  src="./images/x.png"
-                  alt=""
-                />
-              </div>
-
-              <div className="title-reason">{t("reasonText1")}</div>
-
-              <div className="cancel-order-info">
-                <div>
-                  <input
-                    onChange={() => setMany(true)}
-                    id="reasonYes"
-                    type="radio"
-                    name="reasons"
-                  />
-                  <label htmlFor="reasonYes">{t("yes")}</label>
-                </div>
-
-                <div>
-                  <input
-                    checked={true}
-                    onChange={() => setMany(false)}
-                    id="reasonNo"
-                    type="radio"
-                    name="reasons"
-                  />
-                  <label htmlFor="reasonNo">{t("no")}</label>
-                </div>
-
-                <div
-                  onClick={() =>
-                    dispatch(showModals({ show: true, status: "cancel-order" }))
-                  }
-                  className="cancel-btn"
-                >
-                  {t("button2")}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {modalContent.status === "drivers" && (
-            <div className="drivers-list">
-              <div className="cancel-btn">
-                <img
-                  onClick={() => dispatch(hideModal({ show: false }))}
-                  src="./images/x.png"
-                  alt=""
-                />
-              </div>
-
-              <div className="title">{t("driver")}</div>
-
-              <div className="drivers-info">
-                {ordersList.map((item, index) => {
-                  if (item.status === "Delivering") {
-                    return (
-                      <div key={index} className="order">
-                        <div className="top-side-order">
-                          <div className="date">
-                            {item.ordered_time.slice(0, 10)}, &nbsp;
-                            {item.ordered_time.slice(11, 16)}
-                          </div>
-                        </div>
-
-                        <div className="cards">
-                          <div
-                            onClick={() => showModalContent(item)}
-                            className="bottom-side-order"
-                          >
-                            <div className="photo">
-                              <img
-                                src={`${baseUrl}${item.car_category.image}`}
-                                alt=""
-                              />
-                            </div>
-
-                            <div className="content">
-                              <div className="title">
-                                {item.order_title
-                                  ? item.order_title
-                                  : item.type === "OUT"
-                                  ? t("direction2")
-                                  : item.type === "IN"
-                                  ? t("direction3")
-                                  : t("direction1")}
-                              </div>
-                              <div className="text">
-                                <img src="./images/location.png" alt="" />
-                                <div className="info">
-                                  <div className="label">{t("info7")}</div>
-                                  <div className="content">
-                                    {item.distance} km
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="text">
-                                <img src="./images/price.png" alt="" />
-                                <div className="info">
-                                  <div className="label">{t("info14")}</div>
-                                  <div className="content">
-                                    {item.price} {item.currency}
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="line"></div>
-
-                          <a
-                            href={`tel:${+item.driver.phone}`}
-                            className="bottom-side-driver"
-                          >
-                            <div className="photo">
-                              <img src={baseUrl + item.driver.image} alt="" />
-                            </div>
-
-                            <div className="content">
-                              <div className="title">{item.driver.name}</div>
-                              <div className="text">
-                                <img src="./images/truck2.png" alt="" />
-                                <div className="info">
-                                  <div className="label">
-                                    {item.driver.car_name}
-                                  </div>
-                                  <div className="content">
-                                    {item.driver.car_number}
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="text">
-                                <img src="./images/phone.png" alt="" />
-                                <div className="info">
-                                  <div className="label">
-                                    {item.driver.phone}
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </a>
-                        </div>
-                      </div>
-                    );
-                  }
-                })}
-              </div>
-            </div>
-          )}
-
-          {modalContent.status === "active-orders" && (
-            <div className="active-orders-list">
-              <div className="cancel-btn">
-                <img
-                  onClick={() => dispatch(hideModal({ show: false }))}
-                  src="./images/x.png"
-                  alt=""
-                />
-              </div>
-
-              <div className="title">{t("cargoLabel1")}</div>
-
-              <div className="orders-info">
-                {activeOrders.map((item, index) => {
-                  return (
-                    <div
-                      key={index}
-                      onClick={() => {
-                        showModalContent(item);
-                      }}
-                    >
-                      <div className="top-side-order">
-                        <div className="date">
-                          {item.ordered_time.slice(0, 10)}, &nbsp;
-                          {item.ordered_time.slice(11, 16)}
-                        </div>
-                      </div>
-
-                      <div className="bottom-side-order">
-                        <div className="photo">
-                          <img
-                            src={`${baseUrl}${item.car_category.image}`}
-                            alt=""
-                          />
-                        </div>
-
-                        <div className="content">
-                          <div className="title">
-                            {item.order_title
-                              ? item.order_title
-                              : item.type === "OUT"
-                              ? t("direction2")
-                              : item.type === "IN"
-                              ? t("direction3")
-                              : t("direction1")}
-                          </div>
-                          <div className="text">
-                            <img src="./images/location.png" alt="" />
-                            <div className="info">
-                              <div className="label">{t("info7")}</div>
-                              <div className="content">{item.distance} km</div>
-                            </div>
-                          </div>
-                          <div className="text">
-                            <img src="./images/price.png" alt="" />
-                            <div className="info">
-                              <div className="label">{t("info14")}</div>
-                              <div className="content">
-                                {item.price} {item.currency}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {modalContent.status === "contacts" && (
-            <div className="contact-list">
-              <div className="cancel-btn">
-                <img
-                  onClick={() => dispatch(hideModal({ show: false }))}
-                  src="./images/x.png"
-                  alt=""
-                />
-              </div>
-
-              <div className="title">{t("contact")}</div>
-
-              <div className="contact-info">
-                <a href="tel: +998955777971" className="contacts">
-                  <div className="icon">
-                    <img src="./images/mdi_telephone.png" alt="" />
-                  </div>
-                  <div className="text">+998 (95) 577-79-71</div>
-                </a>
-
-                <a href="tel: +998955777972" className="contacts">
-                  <div className="icon">
-                    <img src="./images/mdi_telephone.png" alt="" />
-                  </div>
-                  <div className="text">+998 (95) 577-79-72</div>
-                </a>
-
-                <a href="https://t.me/buyukyol_admin" className="contacts">
-                  <div className="icon">
-                    <img src="./images/sms.png" alt="" />
-                  </div>
-                  <div className="text">{t("send-sms")}</div>
-                </a>
-
-                <div className="social-media">
-                  <a href="https://t.me/buyukyol_uz" target="blank_"> 
-                  <img src="./images/telegram.png" alt="" /></a>
-
-                  <a href="https://www.instagram.com/buyukyol_uz/" target="blank_">
-                    <img src="./images/instagram.png" alt="" /></a>
-
-                  <a href="https://www.tiktok.com/@buyukyol_uz?_t=8l8MCjzfWdk&_r=1" target="blank_"> 
-                  <img src="./images/tiktok.png" alt="" /></a>
-
-                  <a href="https://www.youtube.com/@buyukyol_uz" target="blank_"> <img src="./images/youtube.png" alt="" /></a>
-                  
-                  <a href="https://www.facebook.com/people/Buyukyol-Logistic/pfbid09mbWmsWGkLjuLEW51AWjJz8Ue125zN5KPqRP3dtH5mTzP5V97EqB4xGTRYvYELjUl/" target="blank_">
-                    <img src="./images/facebook.png" alt="" /></a>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {Raiddriver.length > 0 ? (
-            <div className="driver-raid">
-              <div className="photo-driver">
-                <img src={`${baseUrl}${Raiddriver[0].driver.image}`} alt="" />
-              </div>
-
-              <div className="title">{t("raidDriver")}</div>
-
-              <div className="description">{t("raidDriver2")}</div>
-
-              <div className="stars">
-                <ReactStars
-                  count={5}
-                  onChange={(e) => {
-                    setRaidCount(e);
-                  }}
-                  size={50}
-                  color2={"#047766"}
-                  half={false}
-                />
-              </div>
-
-              <div className="comment-box">
-                <input
-                  onChange={(e) => setComment(e.target.value)}
-                  placeholder={t("comment")}
-                  type="text"
-                />
-              </div>
-
-              <div className="buttons">
-                <button
-                  onClick={() => cancelRaid(Raiddriver[0].id)}
-                  className="cancel-btn"
-                >
-                  {t("button3")}
-                </button>
-
-                <button
-                  onClick={() =>
-                    sendRaid(Raiddriver[0].driver.id, Raiddriver[0].id)
-                  }
-                  className="next-btn "
-                >
-                  {t("button2")}
-                </button>
-              </div>
-            </div>
-          ) : (
-            ""
-          )}
-
-          {modalContent.status === "active-driver" && (
-            <div className="active-driver-list">
-              <div className="cancel-btn">
-                <img
-                  onClick={() => dispatch(hideModal({ show: false }))}
-                  src="./images/x.png"
-                  alt=""
-                />
-              </div>
-
-              <div className="title">{t("order")}</div>
-
-              {drivers.map((item, index) => {
-                if (item.driver.id === modalContent.item.driver) {
-                  return (
-                    <div key={index} className="drivers-info">
-                      <div
-                        onClick={() => {
-                          navigate("/history");
-                          dispatch(hideModal({ show: false }));
-                        }}
-                        className="bottom-side-driver"
-                      >
-                        <div className="photo">
-                          <img src={baseUrl + item.driver.image} alt="" />
-                        </div>
-
-                        <div className="content">
-                          <div className="title">
-                            {item.driver.first_name} {item.driver.last_name}
-                          </div>
-                          <div className="text">
-                            <img src="./images/truck2.png" alt="" />
-                            <div className="info">
-                              <div className="label">{item.driver.name}</div>
-                              <div className="content">
-                                {item.driver.car_number}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="text">
-                            <img src="./images/phone.png" alt="" />
-                            <div className="info">
-                              <div className="label">{item.driver.phone}</div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="information-cargo">
-                        <div className="label-info">{t("loc1")}</div>
-                        <div className="info">{item.order.address_from}</div>
-                      </div>
-
-                      <div className="information-cargo">
-                        <div className="label-info">{t("loc3")}</div>
-                        <div className="info">{item.order.address_from}</div>
-                      </div>
-
-                      <div className="information-cargo">
-                        <div className="label-info">{t("info2")}</div>
-                        <div className="info">{item.order.cargo}</div>
-                      </div>
-
-                      <div className="information-cargo">
-                        <div className="label-info">{t("info4")}</div>
-                        <div className="info">
-                          {item.order.capacity} {item.order.unit}
-                        </div>
-                      </div>
-
-                      <div className="information-cargo">
-                        <div className="label-info">{t("info8")}</div>
-                        <div className="info">
-                          {item.order.price} {item.order.currency}
-                        </div>
-                      </div>
-                    </div>
-                  );
+    const {t} = useTranslation();
+    const navigate = useNavigate();
+    const nodeRef = useRef(null);
+    const baseUrl = useSelector((store) => store.baseUrl.data);
+    const dispatch = useDispatch();
+    const modalContent = useSelector((store) => store.ModalContent.data);
+    const PickUpLocations = useSelector((store) => store.PickUpLocations.data)
+    const DropOffLocations = useSelector((store) => store.DropOffLocations.data)
+    const PaymentType = useSelector((store) => store.PaymentType.data)
+
+    const [phone, setPhone] = useState("");
+    const [code, setCode] = useState("");
+    const [checkCode, setCheckCode] = useState(false);
+    const [minutes, setMinutes] = useState(0);
+    const [seconds, setSeconds] = useState(60);
+    const [reason, setReason] = useState(0);
+    const [center, setCenter] = useState(null);
+    const [searchLocationAddress, setSearchLocationAddress] = useState("");
+    const [selected, setSelected] = useState(null);
+    const [other_clinet_phone, setOtherClinetPhone] = useState("");
+    const [other_clinet_name, setOtherClinetName] = useState("");
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            if (seconds > 0) {
+                setSeconds(seconds - 1);
+            }
+            if (seconds === 0) {
+                if (minutes === 0) {
+                    clearInterval(interval);
+                } else {
+                    setSeconds(60);
+                    setMinutes(minutes - 1);
                 }
-              })}
+            }
+        }, 1000);
+
+        return () => {
+            clearInterval(interval);
+        };
+    }, [checkCode ? seconds : null]);
+
+    useEffect(() => {
+        navigator.geolocation.getCurrentPosition((position) => {
+            const {latitude, longitude} = position.coords;
+            let locMy = {lat: latitude, lng: longitude};
+            setCenter(locMy);
+        });
+    }, []);
+
+    useEffect(() => {
+        if (modalContent.location_status === "pick_up") {
+            if (PickUpLocations[modalContent.location_num].address) {
+                let locMy = {
+                    lat: PickUpLocations[modalContent.location_num].latitude,
+                    lng: PickUpLocations[modalContent.location_num].longitude
+                };
+                setCenter(locMy);
+                setSelected(locMy)
+                setSearchLocationAddress(PickUpLocations[modalContent.location_num].address)
+            } else {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    const {latitude, longitude} = position.coords;
+                    let locMy = {lat: latitude, lng: longitude};
+                    setCenter(locMy);
+                });
+            }
+        }
+
+        if (modalContent.location_status === "drop_off") {
+            if (DropOffLocations[modalContent.location_num].address) {
+                let locMy = {
+                    lat: DropOffLocations[modalContent.location_num].latitude,
+                    lng: DropOffLocations[modalContent.location_num].longitude
+                };
+                setCenter(locMy);
+                setSelected(locMy)
+                setSearchLocationAddress(DropOffLocations[modalContent.location_num].address)
+            } else {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    const {latitude, longitude} = position.coords;
+                    let locMy = {lat: latitude, lng: longitude};
+                    setCenter(locMy);
+                });
+            }
+        }
+
+    }, [modalContent.status === "add-location"]);
+
+    const logOut = () => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("userId");
+        window.location.reload();
+        window.location.pathname = "/";
+    };
+
+    const resetTimer = () => {
+        setMinutes(0);
+        setSeconds(59);
+    };
+
+    const getCodeValue = (e) => {
+        setCode(e);
+    };
+
+    const HandleLogin = () => {
+        let user = {
+            phone: phone,
+            role: "client",
+        };
+        axios
+            .post(`${baseUrl}/api/v1/auth/verify_number/`, user)
+            .then((response) => {
+                localStorage.setItem("userId", response.data.user_id);
+                setCheckCode((prevState) => true);
+                dispatch(showModals({show: true, status: "log-in-code"}));
+                if (checkCode) {
+                    resetTimer();
+                }
+            })
+            .catch((error) => {
+                if (error.response.status === 400) {
+                    if (error.response.data.code === -10) {
+                        let idAlert = Date.now();
+                        let alert = {
+                            id: idAlert,
+                            text: "Telefon raqam noto'g'ri",
+                            img: "./images/yellow.svg",
+                            color: "#FFFAEA",
+                        };
+                        dispatch(addAlert(alert));
+                        setTimeout(() => {
+                            dispatch(delAlert(idAlert));
+                        }, 5000);
+                    }
+                }
+            });
+    };
+
+    const CheckCode = () => {
+        axios
+            .post(`${baseUrl}/api/v1/auth/test_verify_code/`, {
+                user: localStorage.getItem("userId"),
+                code: code,
+                role: "client"
+            })
+            .then((response) => {
+
+                localStorage.setItem("token", response.data.token);
+                dispatch(hideModal({show: false}))
+                window.location.pathname = "/edit-profile";
+                let idAlert = Date.now();
+                let alert = {
+                    id: idAlert,
+                    text: "Siz ro'yxatdan o'tdingiz!",
+                    img: "./images/green.svg",
+                    color: "#FFFAEA",
+                };
+                dispatch(addAlert(alert));
+                setTimeout(() => {
+                    dispatch(delAlert(idAlert));
+                }, 5000);
+
+            })
+            .catch((error) => {
+                if (error.response.status === 400) {
+                    if (error.response.data.code === -12) {
+                        let idAlert = Date.now();
+                        let alert = {
+                            id: idAlert,
+                            text: "Kiritilgan kod notog'ri!",
+                            img: "./images/red.svg",
+                            color: "#FFFAEA",
+                        };
+                        dispatch(addAlert(alert));
+                        setTimeout(() => {
+                            dispatch(delAlert(idAlert));
+                        }, 5000);
+                    }
+                }
+            });
+    };
+
+    const selectAddressIcon = {
+        url: "./images/address.png",
+        scaledSize: {width: 40, height: 50},
+    };
+
+    const PlacesAutocomplete = ({setSelected}) => {
+        const {
+            ready,
+            value,
+            setValue,
+            suggestions: {status, data},
+            clearSuggestions,
+        } = usePlacesAutocomplete({
+            requestOptions: {
+                language: i18next.language,
+            },
+        });
+
+        const handleSelect = async (address) => {
+            const results = await getGeocode({address});
+            const {lat, lng} = await getLatLng(results[0]);
+            let locMy = {lat, lng};
+            const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&lan=en`;
+
+            axios
+                .get(`${url}`, {
+                    headers: {
+                        "Accept-Language": i18next.language,
+                    },
+                })
+                .then((res) => {
+                    let city = res.data.address.city;
+                    let suburb = res.data.address.suburb;
+                    let neighbourhood = res.data.address.neighbourhood;
+                    let county = res.data.address.county;
+                    let road = res.data.address.road;
+                    let fullAddress = `${
+                        city ? city + "," : ""
+                    } ${suburb ? suburb + "," : ""} 
+            ${neighbourhood ? neighbourhood + "," : ""} ${
+                        county ? county + "," : ""
+                    } ${road ? road : ""}`;
+
+                    if (res.data.address.country_code === "uz") {
+                        if (modalContent.location_status === "pick_up") {
+                            setSearchLocationAddress(fullAddress);
+                            setSelected(locMy);
+                            setCenter({lat, lng});
+                            setValue(address, false);
+                            clearSuggestions();
+                        } else if (modalContent.location_status === "drop_off") {
+                            setSearchLocationAddress(fullAddress);
+                            setSelected(locMy);
+                            setCenter({lat, lng});
+                            setValue(address, false);
+                            clearSuggestions();
+                        }
+
+                    } else {
+                        let idAlert = Date.now();
+                        let alert = {
+                            id: idAlert,
+                            text: t("errorLocations"),
+                            img: "./images/red.svg",
+                            color: "#FFEDF1",
+                        };
+                        dispatch(addAlert(alert));
+                        setTimeout(() => {
+                            dispatch(delAlert(idAlert));
+                        }, 5000);
+                    }
+
+
+                });
+        };
+
+        return (
+            <Combobox onSelect={handleSelect}>
+                <ComboboxInput
+                    value={value}
+                    onChange={(e) => setValue(e.target.value)}
+                    disabled={!ready}
+                    className="combobox-input"
+                    placeholder={t("input1")}
+                />
+
+                <div className="address-wrapper">
+                    <div className="list-address">
+                        {status === "OK" &&
+                            data.map(({place_id, description}) => (
+                                <ComboboxOption key={place_id} value={description}/>
+                            ))}
+                    </div>
+                </div>
+            </Combobox>
+        );
+    };
+    const ClicklLocation = (e) => {
+        let latitude = e.latLng.lat();
+        let longitude = e.latLng.lng();
+
+        let locMy = {lat: latitude, lng: longitude};
+
+        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&lan=en`;
+
+        axios
+            .get(`${url}`, {
+                headers: {
+                    "Accept-Language": i18next.language,
+                },
+            })
+            .then((res) => {
+                let city = res.data.address.city;
+                let suburb = res.data.address.suburb;
+                let neighbourhood = res.data.address.neighbourhood;
+                let county = res.data.address.county;
+                let road = res.data.address.road;
+                let fullAddress = `${
+                    city ? city + "," : ""
+                } ${suburb ? suburb + "," : ""} 
+            ${neighbourhood ? neighbourhood + "," : ""} ${
+                    county ? county + "," : ""
+                } ${road ? road : ""}`;
+
+                if (res.data.address.country_code === "uz") {
+                    if (modalContent.location_status === "pick_up") {
+                        setSearchLocationAddress(fullAddress);
+                        setSelected(locMy);
+                    } else if (modalContent.location_status === "drop_off") {
+                        setSearchLocationAddress(fullAddress);
+                        setSelected(locMy);
+                    }
+                } else {
+                    let idAlert = Date.now();
+                    let alert = {
+                        id: idAlert,
+                        text: t("errorLocations"),
+                        img: "./images/red.svg",
+                        color: "#FFEDF1",
+                    };
+                    dispatch(addAlert(alert));
+                    setTimeout(() => {
+                        dispatch(delAlert(idAlert));
+                    }, 5000);
+                }
+
+
+            });
+    };
+    const getAddressLocation = () => {
+        if (modalContent.location_status === "pick_up") {
+            if (searchLocationAddress && selected) {
+                dispatch(updateDropLocationPickUp({
+                    index: Number(modalContent.location_num),
+                    newData: {
+                        address: searchLocationAddress,
+                        latitude: Number(selected.lat.toString().slice(0, 9)),
+                        longitude: Number(selected.lng.toString().slice(0, 9))
+                    }
+                }));
+                dispatch(hideModal({show: false}))
+                setSelected(null);
+                setSearchLocationAddress("")
+            } else {
+                let idAlert = Date.now();
+                let alert = {
+                    id: idAlert,
+                    text: t("alert7"),
+                    img: "./images/yellow.svg",
+                    color: "#FFFAEA",
+                };
+                dispatch(addAlert(alert));
+                setTimeout(() => {
+                    dispatch(delAlert(idAlert));
+                }, 5000);
+            }
+        }
+        if (modalContent.location_status === "drop_off") {
+            if (searchLocationAddress && selected) {
+                dispatch(updateDropLocationDrop({
+                    index: Number(modalContent.location_num),
+                    newData: {
+                        address: searchLocationAddress,
+                        latitude: Number(selected.lat.toString().slice(0, 9)),
+                        longitude: Number(selected.lng.toString().slice(0, 9))
+                    }
+                }));
+                dispatch(hideModal({show: false}))
+                setSelected(null);
+                setSearchLocationAddress("")
+            } else {
+                let idAlert = Date.now();
+                let alert = {
+                    id: idAlert,
+                    text: t("alert7"),
+                    img: "./images/yellow.svg",
+                    color: "#FFFAEA",
+                };
+                dispatch(addAlert(alert));
+                setTimeout(() => {
+                    dispatch(delAlert(idAlert));
+                }, 5000);
+            }
+        }
+    };
+
+    const {isLoaded} = useLoadScript({
+        googleMapsApiKey: GOOGLE_MAPS_API_KEY,
+        libraries: libraries,
+        language: i18next.language,
+    });
+
+    const options = useMemo(
+        () => ({
+            disableDefaultUI: false,
+            clickableIcons: false,
+        }),
+        []
+    );
+
+    const changePaymentType = (e) => {
+        let payment = {payment_type: e}
+        dispatch(changePayment(payment))
+    }
+
+    const addClient = () => {
+        let client = {
+            name: other_clinet_name,
+            phone: other_clinet_phone
+        }
+        dispatch(AddClientInfo(client))
+        dispatch(hideModal({show: false}))
+    }
+
+    useOnKeyPress(checkCode ? CheckCode : HandleLogin, "Enter");
+
+    if (!isLoaded) return <Loader/>;
+    return (
+        <CSSTransition
+            in={modalContent.show && modalContent.status !== "orders"}
+            nodeRef={nodeRef}
+            timeout={300}
+            classNames="alert"
+            unmountOnExit
+        >
+            <div
+                className="modal-sloy">
+                <div ref={nodeRef} className="modal-card">
+
+                    {modalContent.status === "log-out" && (
+                        <div className="confirm">
+                            <div className="toptext">Rostdan ham profildan chiqmoqchimisz?</div>
+                            <div className="btns">
+                                <button
+                                    className="not-out"
+                                    onClick={() => dispatch(hideModal({show: false}))}
+                                >
+                                    Qolish
+                                </button>
+                                <button onClick={logOut}>Chiqish</button>
+                            </div>
+                        </div>
+                    )}
+
+                    {modalContent.status === "log-in" && (
+                        <div className="login-box">
+
+
+                            <div className="logo">
+                                <img src="./images/logo2.webp" alt=""/>
+                            </div>
+                            <h1 className="title">
+                                Xush kelibsiz!
+                            </h1>
+                            <p className="des">
+                                Buyurtma berishingiz uchun tizimga kirishingiz talab etiladi!
+                            </p>
+
+                            <div className="label">Telefon raqamingiz:</div>
+
+                            <PhoneInput
+                                id="phone"
+                                international
+                                defaultCountry="UZ"
+                                value={phone}
+                                onChange={setPhone}
+                            />
+
+                            <button onClick={HandleLogin} disabled={phone === "" || phone === undefined}
+                                    className={`next-btn ${phone === "" || phone === undefined ? "disabled" : ""}`}>
+                                Davom etish
+                            </button>
+
+                        </div>
+                    )}
+
+                    {modalContent.status === "log-in-code" && (
+                        <div className="login-box">
+                            <h1 className="title">
+                                Maxsus kodni kiriting
+                            </h1>
+                            <p className="des">
+                                Telefon raqamingizga maxsus kod SMS tarzda yuborildi
+                            </p>
+
+                            <div className="phone-number">
+                                {phone} <img onClick={() => {
+                                dispatch(showModals({show: true, status: "log-in"}));
+                                setCheckCode(false)
+                            }} src="./images/pencil.webp"
+                                             alt="edit-phone" loading="lazy"/>
+                            </div>
+
+                            <div className="inputs-verify-code">
+                                <AuthCode
+                                    allowedCharacters="numeric"
+                                    length="5"
+                                    onChange={getCodeValue}
+                                />
+                            </div>
+
+                            {checkCode && seconds > 0 || minutes > 0 ? (
+                                <div className="coundown">
+                                    <div className="count">
+                                        <img src="./images/time.png" alt=""/>
+                                        {minutes < 10 ? `0${minutes}` : minutes}:
+                                        {seconds < 10 ? `0${seconds}` : seconds}
+                                    </div>
+                                </div>
+                            ) : <div onClick={HandleLogin} className="code-ref">Qayta yuborish</div>}
+
+                            <button
+                                disabled={code.trim().length < 5}
+                                onClick={CheckCode}
+                                className={` next-btn ${code.trim().length < 5 ? "disabled" : ""}`}
+                            >
+                                Kirish
+                            </button>
+
+                        </div>
+                    )}
+
+                    {modalContent.status === "download-app" && (
+                        <div className="download-app">
+                            <div className="cancel-btn">
+                                <img
+                                    onClick={() => {
+                                        dispatch(hideModal({show: false}))
+                                    }}
+                                    src="./images/cancel.webp"
+                                    alt="cancel"/>
+                            </div>
+
+                            <div className="logo">
+                                <img src="./images/logo2.webp" alt=""/>
+                            </div>
+                            <h1 className="title">
+                                O‘zingizga mos ilovani hozir yuklab oling!
+                            </h1>
+
+                            <div className="top-side-app">
+                                <a href="#" className="button">
+                                    <div className="left">
+                                        <img src="./images/apple.webp" alt="apple" loading="lazy"/>
+                                    </div>
+                                    <div className="right">
+                                        <div className="top-text">Download on the</div>
+                                        <b>App store</b>
+                                    </div>
+                                </a>
+                                <a href="#" className="button">
+                                    <div className="left">
+                                        <img src="./images/google.webp" alt="google" loading="lazy"/>
+                                    </div>
+                                    <div className="right">
+                                        <div className="top-text">GET IT ON</div>
+                                        <b>Google Play</b>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+                    )}
+
+                    {modalContent.status === "about-app" && (
+                        <div className="about-app">
+                            <div className="cancel-btn">
+                                <img
+                                    onClick={() => {
+                                        dispatch(hideModal({show: false}))
+                                    }}
+                                    src="./images/cancel.webp"
+                                    alt="cancel"/>
+                            </div>
+                            <h1 className="title">
+                                Ilova haqida
+                            </h1>
+
+                            <div className="logo-card">
+                                <div className="title">
+                                    Ishlab chiqaruvchilar
+                                </div>
+
+                                <div className="logo">
+                                    <img src="./images/logo3.webp" alt=""/>
+                                </div>
+                                <div className="version">1.0.1 talqin</div>
+                            </div>
+
+                            <div className="item line">
+                                <div className="left">
+                                    <div className="icon">
+                                        <img src="./images/phone.webp" alt="phone" loading="lazy"/>
+                                    </div>
+                                    <div className="name">+998 99 999 99 99</div>
+                                </div>
+                                <div className="icon-more">
+                                    <img src="./images/more.webp" alt="more" loading="lazy"/>
+                                </div>
+                            </div>
+
+                            <div className="item">
+                                <div className="left">
+                                    <div className="icon">
+                                        <img src="./images/sms.webp" alt="phone" loading="lazy"/>
+                                    </div>
+                                    <div className="name">Mutxasisga yozish</div>
+                                </div>
+
+                                <div className="icon-more">
+                                    <img src="./images/more.webp" alt="more" loading="lazy"/>
+                                </div>
+                            </div>
+
+                            <div className="social-media">
+                                <div className="media">
+                                    <img src="./images/youtube.webp" alt="yotube" loading="lazy"/>
+                                    <div className="name">Youtube</div>
+                                </div>
+
+                                <div className="media">
+                                    <img src="./images/facebook.webp" alt="yotube" loading="lazy"/>
+                                    <div className="name">Facebook</div>
+                                </div>
+
+                                <div className="media">
+                                    <img src="./images/telegram.webp" alt="yotube" loading="lazy"/>
+                                    <div className="name">Telegram</div>
+                                </div>
+                            </div>
+
+                            <div className="web-sayt">
+                                © 2024 ada.taxi.uz
+                            </div>
+                        </div>
+                    )}
+
+                    {modalContent.status === "payment-type" && (
+                        <div className="payment-type">
+                            <div className="header">
+                                <h1 className="title">
+                                    To'lov turini tanlang
+                                </h1>
+                            </div>
+                            <div className="radio-buttons">
+                                <label className="label-payment">
+                                    <div className="left">
+                                        <img src="./images/card.webp" alt="card" loading="lazy"/>
+                                        <span>Naqt</span>
+                                    </div>
+
+
+                                    <input
+                                        type="radio"
+                                        value="Naqt"
+                                        checked={PaymentType.payment_type === "Naqt"}
+                                        onChange={(e) => changePaymentType(e.target.value)}
+                                        className="w-4 h-4"
+                                    />
+                                </label>
+
+                                <label className="label-payment">
+                                    <div className="left">
+                                        <img src="./images/card.webp" alt="card" loading="lazy"/>
+                                        <span>Karta</span>
+                                    </div>
+
+
+                                    <input
+                                        type="radio"
+                                        value="Karta"
+                                        checked={PaymentType.payment_type === "Karta"}
+                                        onChange={(e) => changePaymentType(e.target.value)}
+                                        className="w-4 h-4"
+                                    />
+
+                                </label>
+                            </div>
+
+                            <div onClick={() => {
+                                dispatch(hideModal({show: false}))
+                            }} className="send-btn">
+                                Tasdiqlash
+                            </div>
+
+                        </div>
+                    )}
+
+                    {modalContent.status === "add-other" && (
+                        <div className="add-other">
+                            <div className="header">
+                                <h1 className="title">
+                                    Kim uchun buyurtma beramiz?
+                                </h1>
+                                <div className="cancel-btn">
+                                    <img
+                                        onClick={() => {
+                                            dispatch(hideModal({show: false}))
+                                        }}
+                                        src="./images/cancel.webp"
+                                        alt="cancel"/>
+                                </div>
+                            </div>
+
+                            <div className="form-box">
+                                <label htmlFor="phone">Telefon raqami</label>
+                                <input value={other_clinet_phone}
+                                       onChange={(e) => setOtherClinetPhone(e.target.value)}
+                                       id="phone"
+                                       placeholder="Telefon raqam kirting..." type="number"/>
+                            </div>
+
+                            <div className="form-box">
+                                <label htmlFor="name">Ismi</label>
+                                <input value={other_clinet_name} onChange={(e) => setOtherClinetName(e.target.value)}
+                                       id="name" placeholder="Ismini kirting..." type="text"/>
+                            </div>
+
+                            <button
+                                onClick={addClient}
+                                disabled={!(other_clinet_phone.trim().length > 0 && other_clinet_name.trim().length > 0)}
+                                className={`send-btn ${!(other_clinet_phone.trim().length > 0 && other_clinet_name.trim().length > 0) ? "btn-disablet" : ""}`}>
+                                Tasdiqlash
+                            </button>
+                        </div>
+                    )}
+
+                    {modalContent.status === "cancel-order" && (
+                        <div className="cancel-order">
+                            <div className="header">
+                                <h1 className="title">
+                                    Bekor qilish sababini tanlang
+                                </h1>
+
+                                <div className="cancel-btn">
+                                    <img
+                                        onClick={() => {
+                                            dispatch(hideModal({show: false}))
+                                        }}
+                                        src="./images/cancel.webp"
+                                        alt="cancel"/>
+                                </div>
+                            </div>
+
+                            <div className="radio-buttons">
+                                <label className="label-payment">
+                                    <span>Rejalarim o‘zgardi</span>
+                                    <input
+                                        type="radio"
+                                        value="1"
+                                        checked={reason === "1"}
+                                        onChange={(e) => setReason(e.target.value)}
+                                    />
+                                </label>
+
+                                <label className="label-payment">
+                                    <span>Boshqa mashina topdim</span>
+                                    <input
+                                        type="radio"
+                                        value="2"
+                                        checked={reason === "2"}
+                                        onChange={(e) => setReason(e.target.value)}
+                                    />
+                                </label>
+
+                                <label className="label-payment">
+                                    <span>Chaqiruv nuqtasi noto‘g‘ri belgilandi</span>
+                                    <input
+                                        type="radio"
+                                        value="3"
+                                        checked={reason === "3"}
+                                        onChange={(e) => setReason(e.target.value)}
+                                    />
+                                </label>
+
+                                <label className="label-payment">
+                                    <span>Uzoq kutish kerak edi</span>
+                                    <input
+                                        type="radio"
+                                        value="4"
+                                        checked={reason === "4"}
+                                        onChange={(e) => setReason(e.target.value)}
+                                    />
+                                </label>
+
+                                <label className="label-payment">
+                                    <span>Haydovchi bekor qilishni so‘radi</span>
+                                    <input
+                                        type="radio"
+                                        value="5"
+                                        checked={reason === "5"}
+                                        onChange={(e) => setReason(e.target.value)}
+                                    />
+                                </label>
+
+                                <label className="label-payment">
+                                    <div className="input-box">
+                                        <input onClick={() => setReason("6")}
+                                               placeholder="Bekor qilish sababini kiriting..." type="text"/>
+                                    </div>
+
+                                    <input
+                                        type="radio"
+                                        value="6"
+                                        checked={reason === "6"}
+                                        onChange={(e) => setReason(e.target.value)}
+                                    />
+                                </label>
+                            </div>
+
+                            <div className="send-btn">
+                                Tasdiqlash
+                            </div>
+
+                        </div>
+                    )}
+
+                    {modalContent.status === "add-location" && (
+                        <div className="add-location">
+                            <div className="header">
+                                <h1 className="title">
+                                    Manzilni tanlang
+                                </h1>
+                                <div className="cancel-btn">
+                                    <img
+                                        onClick={() => {
+                                            dispatch(hideModal({show: false}))
+                                        }}
+                                        src="./images/cancel.webp"
+                                        alt="cancel"/>
+                                </div>
+                            </div>
+
+                            <div className="map-box">
+                                <GoogleMap
+                                    zoom={10}
+                                    center={center}
+                                    options={options}
+                                    onClick={ClicklLocation}
+                                    mapContainerClassName="map"
+                                >
+                                    {selected && (
+                                        <Marker icon={selectAddressIcon} position={selected}/>
+                                    )}
+
+                                    <div className="search-address">
+                                        <div className="places-container">
+                                            <PlacesAutocomplete setSelected={setSelected}/>
+                                            <img src="./images/search.png" alt=""/>
+                                        </div>
+                                    </div>
+                                </GoogleMap>
+                            </div>
+
+                            <div onClick={getAddressLocation} className="send-btn">
+                                Tasdiqlash
+                            </div>
+                        </div>
+                    )}
+                </div>
             </div>
-          )}
-
-          {modalContent.status === "edit-user" && (
-            <div className="edit-user">
-              <div className="cancel-btn">
-                <img
-                  onClick={() => dispatch(hideModal({ show: false }))}
-                  src="./images/x.png"
-                  alt=""
-                />
-              </div>
-
-              <div className="title">{t("edit-user")}</div>
-
-              <div className="input-user-info">
-                <input
-                  onChange={(e) => setFirstName(e.target.value)}
-                  value={firstName}
-                  placeholder={t("registertext2")}
-                  type="text"
-                />
-                <input
-                  onChange={(e) => setLastName(e.target.value)}
-                  value={lastName}
-                  placeholder={t("registertext3")}
-                  type="text"
-                />
-              </div>
-
-              <div onClick={editUser} className="edit-btn">
-                {t("button2")}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </CSSTransition>
-  );
+        </CSSTransition>
+    );
 };
 export default Modal;

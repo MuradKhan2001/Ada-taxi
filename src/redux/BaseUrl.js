@@ -2,8 +2,7 @@ import {createSlice} from "@reduxjs/toolkit"
 
 export const baseUrl = createSlice({
     name: "baseUrl",
-    initialState: {data: "https://api.buyukyol.uz/"},
-    // initialState: {data: "http://192.168.43.59:5000/"},
+    initialState: {data: "http://157.245.37.245"},
 })
 
 export default baseUrl.reducer
