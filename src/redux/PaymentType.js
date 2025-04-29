@@ -4,7 +4,7 @@ export const PaymentType = createSlice({
     name: "PaymentType",
     initialState: {
         data: {
-            payment_type: "Naqt"
+            payment_type: "cash"
         }
     },
     reducers: {

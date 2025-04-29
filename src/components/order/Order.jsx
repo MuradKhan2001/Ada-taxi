@@ -1,58 +1,46 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useContext} from 'react';
 import "./style-order.scss";
 import ReactStars from "react-stars";
-import {showModals} from "../../redux/ModalContent";
+import {hideModal, showModals} from "../../redux/ModalContent";
 import {useDispatch, useSelector} from "react-redux";
 import {useNavigate} from "react-router-dom";
 import {useTranslation} from "react-i18next";
-import {addLocations, delLocations} from "../../redux/PickUpLocations";
-import {addLocationsDrop, delLocationsDrop} from "../../redux/DropOffLocations";
+import {addLocations, delLocations, clearPickUpLocations} from "../../redux/PickUpLocations";
+import {addLocationsDrop, delLocationsDrop, clearDropOffLocations} from "../../redux/DropOffLocations";
 import {AddClientInfo} from "../../redux/AddClient";
+import {webSockedContext} from "../app/App";
 import axios from "axios";
 import i18next from "i18next";
+import {ShowHideModal} from "../../redux/GetLocations";
+import {addAlert, delAlert} from "../../redux/AlertsBox";
 
 const Order = () => {
+    let webSocked = useContext(webSockedContext);
     const baseUrl = useSelector((store) => store.baseUrl.data)
     const {t} = useTranslation();
+    const [progress, setProgress] = useState(0);
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const PickUpLocations = useSelector((store) => store.PickUpLocations.data)
     const DropOffLocations = useSelector((store) => store.DropOffLocations.data)
     const PaymentType = useSelector((store) => store.PaymentType.data)
     const OtherClients = useSelector((store) => store.AddClient.data)
-    const [client_count, setClient_count] = useState(0);
+    const [client_count, setClient_count] = useState(1);
     const [raidCount, setRaidCount] = useState();
     const [orderPage, setOrderPage] = useState(0);
+    const [dots, setDots] = useState("");
 
-    const [direction, setDirection] = useState([
-        {id: "regional", name: "Taksi"},
-        {id: "postal", name: "Po'chta"},
-        {id: "minivan", name: "Miniven"},
-        {id: "travel", name: "Sayohat"},
-    ]);
+    const direction = [
+        {id: "regional", name: t("direction1")},
+        {id: "postal", name: t("direction2")},
+        {id: "minivan", name: t("direction3")},
+        {id: "travel", name: t("direction4")},
+    ];
+
     const [active_direction, setActive_direction] = useState("regional")
 
-    const [price_list, setPrice_list] = useState([
-        {
-            id: 1,
-            img: "./images/car-tarif.webp",
-            name: "Ekonom",
-            price: "1 000"
-        },
-        {
-            id: 2,
-            img: "./images/car-tarif.webp",
-            name: "Komford",
-            price: "1 000 000"
-        },
-        {
-            id: 3,
-            img: "./images/car-tarif.webp",
-            name: "Komford pro",
-            price: "1 500 000"
-        }
-    ]);
-    const [active_price, setActive_price] = useState(1);
+    const [price_list, setPrice_list] = useState([]);
+    const [active_price, setActive_price] = useState("");
 
     const [comment_driver, setComment_driver] = useState("");
 
@@ -62,6 +50,12 @@ const Order = () => {
 
     const [pick_up_date, setPick_up_date] = useState("");
     const [pick_up_time, setPick_up_time] = useState("");
+
+    const [sender_phone, setsender_phone] = useState("");
+    const [receiver_phone, setReceiverPhone] = useState("");
+    const [payer, setPayer] = useState("sender");
+
+    const [active_order, setActive_Order] = useState([]);
 
     useEffect(() => {
         if (localStorage.getItem("token")) {
@@ -74,10 +68,126 @@ const Order = () => {
             })
         }
         getPrice()
+        getActiveOrders()
     }, []);
 
-    const showModalContent = (status, location_num = "", location_status = "") => {
-        dispatch(showModals({show: true, status: status, location_num, location_status}));
+    useEffect(() => {
+        getData()
+    }, [PickUpLocations, DropOffLocations, active_service, all_seats, client_count, active_direction]);
+
+    useEffect(() => {
+        webSocked.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+
+            if (data.action === "reject_order") {
+                setOrderPage(0)
+                let idAlert = Date.now();
+                let alert = {
+                    id: idAlert, text: t("alert_cancel"), img: "./images/green.svg", color: "#EDFFFA"
+                };
+                dispatch(addAlert(alert));
+                setTimeout(() => {
+                    dispatch(delAlert(idAlert));
+                }, 5000);
+                dispatch(hideModal({show: false}))
+            }
+
+            if (data.action === "order_started") {
+                let idAlert = Date.now();
+                let alert = {
+                    id: idAlert, text: t("order_started"), img: "./images/green.svg", color: "#EDFFFA"
+                };
+                dispatch(addAlert(alert));
+                setTimeout(() => {
+                    dispatch(delAlert(idAlert));
+                }, 5000);
+            }
+
+            if (data.action === "arrived") {
+                let idAlert = Date.now();
+                let alert = {
+                    id: idAlert, text: t("arrived"), img: "./images/green.svg", color: "#EDFFFA"
+                };
+                dispatch(addAlert(alert));
+                setTimeout(() => {
+                    dispatch(delAlert(idAlert));
+                }, 5000);
+            }
+
+            if (data.action === "trip_started") {
+                let idAlert = Date.now();
+                let alert = {
+                    id: idAlert, text: t("trip_started"), img: "./images/green.svg", color: "#EDFFFA"
+                };
+                dispatch(addAlert(alert));
+                setTimeout(() => {
+                    dispatch(delAlert(idAlert));
+                }, 5000);
+            }
+
+            if (data.action === "order_finished") {
+                let idAlert = Date.now();
+                let alert = {
+                    id: idAlert, text: t("order_finished"), img: "./images/green.svg", color: "#EDFFFA"
+                };
+                dispatch(addAlert(alert));
+                setTimeout(() => {
+                    dispatch(delAlert(idAlert));
+                }, 5000);
+            }
+
+            if (data.action === "driver_location") {
+                let idAlert = Date.now();
+                let alert = {
+                    id: idAlert, text: t("driver_location"), img: "./images/green.svg", color: "#EDFFFA"
+                };
+                dispatch(addAlert(alert));
+                setTimeout(() => {
+                    dispatch(delAlert(idAlert));
+                }, 5000);
+            }
+        };
+    }, [webSocked])
+
+    useEffect(() => {
+        const totalDuration = 3 * 60 * 1000;
+        const interval = 1000;
+        const step = (100 / (totalDuration / interval));
+        const timer = setInterval(() => {
+            setProgress((prev) => {
+                if (prev + step >= 100) return 0;
+                return prev + step;
+            });
+        }, interval);
+        return () => clearInterval(timer);
+    }, []);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setDots((prev) => (prev.length < 3 ? prev + "." : ""));
+        }, 500);
+
+        return () => clearInterval(interval);
+    }, []);
+
+    const getActiveOrders = () => {
+        axios.get(`${baseUrl}/api/v1/client-active-orders/`, {
+            headers: {
+                "Authorization": `Token ${localStorage.getItem("token")}`
+            }
+        }).then((response) => {
+            setActive_Order(response.data[0]);
+            if (response.data.length > 0) {
+                if (response.data[0].driver) {
+                    setOrderPage(4)
+                } else setOrderPage(3)
+
+            }
+        })
+    }
+
+    const showModalContent = (status, id) => {
+        dispatch(showModals({show: true, status: status, id}));
     };
 
     const addLocation = (location) => {
@@ -148,6 +258,82 @@ const Order = () => {
         })
     }
 
+    const getLocations = (location_num = "", location_status = "") => {
+        dispatch(ShowHideModal({show: true, location_num, location_status}));
+    }
+
+    const getData = () => {
+
+        let data = {
+            service: active_direction,
+            from_region: PickUpLocations[0].latitude !== null ? PickUpLocations[0] : {},
+            to_region: DropOffLocations[0].latitude !== null ? DropOffLocations[0] : {},
+            passanger_count: client_count,
+            book_all_seats: all_seats,
+            extra_services: active_service
+        }
+
+        if ((PickUpLocations[0].latitude !== null) === (DropOffLocations[0].latitude !== null)) {
+            axios.post(`https://api.adataxi.uz/api/v1/get-prices/`, data).then((response) => {
+                setPrice_list(response.data)
+            })
+        }
+
+    }
+
+    const SendOrder = () => {
+        let allInfo = {
+            car_service: active_direction,
+            car_category: active_price,
+            passanger_count: client_count,
+            payment_type: PaymentType.payment_type,
+            pick_up_date: `${pick_up_date}T${pick_up_time}Z`,
+            end_date: null,
+            book_all_seats: all_seats,
+            comment_to_driver: comment_driver,
+            sender_phone,
+            receiver_phone,
+            payer,
+            extra_services: active_service,
+            pick_up_locations: PickUpLocations,
+            drop_off_locations: DropOffLocations
+        }
+
+        if (pick_up_date && pick_up_time) {
+            axios.post(`${baseUrl}/api/v1/order-create/`, allInfo, {
+                headers: {
+                    "Authorization": `Token ${localStorage.getItem("token")}`
+                }
+            }).then((response) => {
+                setActive_Order([response.data])
+                getActiveOrders()
+                let idAlert = Date.now();
+                let alert = {
+                    id: idAlert, text: t("confirm"), img: "./images/green.svg", color: "#EDFFFA"
+                };
+                dispatch(addAlert(alert));
+                setTimeout(() => {
+                    dispatch(delAlert(idAlert));
+                }, 5000);
+                dispatch(clearPickUpLocations())
+                dispatch(clearDropOffLocations())
+            })
+        } else {
+            let idAlertError = Date.now();
+            let alert = {
+                id: idAlertError,
+                text: t("confirm_form"),
+                img: "./images/red.svg",
+                color: "#FFEDF1",
+            };
+            dispatch(addAlert(alert));
+            setTimeout(() => {
+                dispatch(delAlert(idAlertError));
+            }, 5000);
+        }
+
+    };
+
     return (
         <div className="order-wrapper">
             {orderPage === 0 && <div className="order-box">
@@ -161,11 +347,11 @@ const Order = () => {
                                 <div className="location-text">
                                     <div className={`location-name`}>
                                         {item.address ? item.address : <div className="placeholder-address">
-                                            Olib ketish manzilini tanlang
+                                            {t("pick_up")}
                                         </div>}
                                     </div>
 
-                                    <div onClick={() => showModalContent("add-location", index, "pick_up")}
+                                    <div onClick={() => getLocations(index, "pick_up")}
                                          className="loc-icon">
                                         <img src="./images/add-pin.png" alt="add" loading="lazy"/>
                                     </div>
@@ -190,11 +376,11 @@ const Order = () => {
                                 <div className="location-text">
                                     <div className={`location-name`}>
                                         {item.address ? item.address : <div className="placeholder-address">
-                                            Yetkazish manzilini tanlang
+                                            {t("drop")}
                                         </div>}
                                     </div>
 
-                                    <div onClick={() => showModalContent("add-location", index, "drop_off")}
+                                    <div onClick={() => getLocations(index, "drop_off")}
                                          className="loc-icon">
                                         <img src="./images/add-pin.png" alt="add" loading="lazy"/>
                                     </div>
@@ -223,12 +409,13 @@ const Order = () => {
                 </div>
                 <div className="tarif-price">
                     {price_list.map((item, index) => {
-                        return <div onClick={() => setActive_price(item.id)} key={index}>
-                            <div className={`tarif-card ${item.id === active_price && "active"}`}>
+                        return <div onClick={() => setActive_price(item.category && item.category.id)} key={index}>
+                            <div
+                                className={`tarif-card ${item.category && item.category.id === active_price && "active"}`}>
                                 <img src={item.category && item.category.icon} alt="car" loading="lazy"/>
                                 <div
                                     className="name">{item.category && item.category.translations[i18next.language].name}</div>
-                                <div className="price">{item.cost} so'm</div>
+                                <div className="price">{item.cost} {t("sum")}</div>
                             </div>
                         </div>
                     })}
@@ -237,13 +424,13 @@ const Order = () => {
                     <div className="left">
                         <img src="./images/sms2.webp" alt="sms" loading="lazy"/>
                         <input onChange={(e) => setComment_driver(e.target.value)}
-                               value={comment_driver} placeholder="Haydovchi uchun izoh qoldiring..." type="text"/>
+                               value={comment_driver} placeholder={t("comment_driver")} type="text"/>
                     </div>
                 </div>
                 <div onClick={() => showModalContent("payment-type")} className="payment">
                     <div className="left">
                         <img src="./images/payment.webp" alt="sms" loading="lazy"/>
-                        Tolov turi
+                        {t("payment_type")}
                     </div>
                     <div className="right">
                         {PaymentType.payment_type}
@@ -251,37 +438,32 @@ const Order = () => {
                     </div>
                 </div>
 
-                {OtherClients.name && OtherClients.phone ? <div className="other">
+                {active_direction !== "postal" && OtherClients.name && OtherClients.phone ? <div className="other">
                     <div className="left">
                         <img src="./images/user-1.webp" alt="sms" loading="lazy"/>
                         <div className="info">
                             <div className="name">
                                 {OtherClients.name}
                             </div>
-
                             <div className="phone">
                                 {OtherClients.phone}
                             </div>
                         </div>
-
                     </div>
-
                     <div className="right">
                         <img onClick={delClient} src="./images/trash.webp" alt="more"
                              loading="lazy"/>
                     </div>
-
-
-                </div> : <div onClick={() => showModalContent("add-other")} className="funtion">
-                    <div className="left">
-                        <img src="./images/user-1.webp" alt="sms" loading="lazy"/>
-                        Boshqa uchun buyurtma qilish
-                    </div>
-                    <img src="./images/more.webp" alt="more" loading="lazy"/>
-                </div>}
-
+                </div> : active_direction !== "postal" &&
+                    <div onClick={() => showModalContent("add-other")} className="funtion">
+                        <div className="left">
+                            <img src="./images/user-1.webp" alt="sms" loading="lazy"/>
+                            {t("other_order")}
+                        </div>
+                        <img src="./images/more.webp" alt="more" loading="lazy"/>
+                    </div>}
                 <div className="services">
-                    {services.map((item, index) => {
+                    {active_direction !== "postal" && services.map((item, index) => {
                         const isActive = active_service.includes(item.id);
                         if (item.is_main) {
                             return <div key={index} className="service">
@@ -291,7 +473,7 @@ const Order = () => {
                                             {item.translations[i18next.language].name}
                                         </div>
                                         <div className="price-service">
-                                            To‘lov {item.price} so‘m
+                                            To‘lov {item.price} {t("sum")}
                                         </div>
                                     </div>
                                 </div>
@@ -303,30 +485,46 @@ const Order = () => {
                         }
                     })}
 
-                    <div onClick={() => setOrderPage(1)} className="service cursor">
+                    {active_direction !== "postal" && <div onClick={() => setOrderPage(1)} className="service cursor">
                         <div className="left">
                             <img src="./images/filter.webp" alt="sms" loading="lazy"/>
-                            Qo‘shimcha xizmatlar
+                            {t("plus_service")}
                         </div>
                         <img src="./images/more.webp" alt="more" loading="lazy"/>
-                    </div>
+                    </div>}
                 </div>
             </div>}
-            {orderPage === 0 && <div onClick={() => setOrderPage(6)} className="button-box">
+            {orderPage === 0 && <div onClick={() => {
+                if (PickUpLocations[0].latitude !== null && DropOffLocations[0].latitude !== null && active_price) {
+                    if (active_direction !== "postal") {
+                        setOrderPage(6)
+                    } else setOrderPage(7)
+                } else {
+                    let idAlertError = Date.now();
+                    let alert = {
+                        id: idAlertError,
+                        text: "Tarif va manzillarni kiriting!",
+                        img: "./images/red.svg",
+                        color: "#FFEDF1",
+                    };
+                    dispatch(addAlert(alert));
+                    setTimeout(() => {
+                        dispatch(delAlert(idAlertError));
+                    }, 5000);
+                }
+            }} className="button-box">
                 <div className="button">
-                    Keyingi
+                    {t("next")}
                 </div>
             </div>}
 
             {orderPage === 1 && <div className="services-box">
                 <div className="header">
                     <img onClick={() => setOrderPage(0)} src="./images/prev.png" alt="prev" loading="lazy"/>
-
                     <div className="title">
-                        Qo'shimcha xizmatlar
+                        {t("plus_service")}
                     </div>
                 </div>
-
                 {services.map((item, index) => {
                     const isActive = active_service.includes(item.id);
                     if (!item.is_main) {
@@ -337,7 +535,7 @@ const Order = () => {
                                         {item.translations[i18next.language].name}
                                     </div>
                                     <div className="price-service">
-                                        To‘lov {item.price} so‘m
+                                        {t("payment")} {item.price} {t("sum")}
                                     </div>
                                 </div>
                             </div>
@@ -348,20 +546,17 @@ const Order = () => {
                         </div>
                     }
                 })}
-
-            </div>}
-            {orderPage === 1 && <div className="button-box">
-                <div className="button">
-                    Saqlash
-                </div>
             </div>}
 
             {orderPage === 3 && <div className="search-driver">
                 <div className="header">
-                    Haydovchi qidirilmoqda...
+                    <div className="title">
+                        {t("search_driver")}
+                    </div>
+                    <span>{dots}</span>
                 </div>
                 <div className="loading">
-                    <div className="loader"></div>
+                    <div className="loader" style={{width: `${progress}%`}}></div>
                 </div>
                 <div className="location-box">
                     <div className="location-from">
@@ -369,125 +564,147 @@ const Order = () => {
                             <div className="circle"></div>
                         </div>
                         <div className="location-text">
-                            Chilonzor tumani, Chilonzor M-mavze, 11, Toshkent
+                            {active_order.pick_up_locations && active_order.pick_up_locations.map((item, index) => {
+                                return <span key={index}>
+                                    {item.address}
+                                </span>
+                            })}
                         </div>
                     </div>
-
                     <div className="line"></div>
-
                     <div className="location-to">
                         <div className="circle-warpper">
                             <div className="circle"></div>
                         </div>
                         <div className="location-text">
-                            Andijon viloyati, Baliqchi tumani, Baliqchi hokimyati
+                            {active_order.drop_off_locations && active_order.drop_off_locations.map((item, index) => {
+                                return <span key={index}>
+                                    {item.address}
+                                </span>
+                            })}
                         </div>
                     </div>
                 </div>
                 <div className="info-box">
                     <div className="information">
                         <div className="label">
-                            Tarif
+                            {t("direction")}
                         </div>
                         <div className="val">
-                            Ekonom
+                            {active_order.car_service && active_order.car_service.translations[i18next.language].name}
                         </div>
                     </div>
-
                     <div className="information">
                         <div className="label">
-                            To‘lov turi
+                            {t("tarif")}
                         </div>
                         <div className="val">
-                            Naqt
+                            {active_order.car_category && active_order.car_category.translations[i18next.language].name}
                         </div>
                     </div>
-
                     <div className="information">
                         <div className="label">
-                            Buyurtma raqami
+                            {t("payment_type")}
                         </div>
                         <div className="val">
-                            4922184921
+                            {active_order.payment_type}
                         </div>
                     </div>
-
                     <div className="information">
                         <div className="label">
-                            Safar kuni va vaqti
+                            {t("order_id")}
                         </div>
                         <div className="val">
-                            13-oktyabr, 12:00
+                            {active_order.id}
+                        </div>
+                    </div>
+                    <div className="information">
+                        <div className="label">
+                            {t("date_time")}
+                        </div>
+                        <div className="val">
+                            {active_order.pick_up_date}
                         </div>
                     </div>
                 </div>
                 <div className="price-order">
                     <div className="information">
                         <div className="label">
-                            Yo‘lovchilar soni
+                            {t("passangers_count")}
                         </div>
                         <div className="val">
-                            4 kishi
+                            {active_order.passanger_count}
                         </div>
                     </div>
-
                     <div className="information">
                         <div className="label">
-                            Yo‘l haqi summasi
+                            {t("price")}
                         </div>
                         <div className="val-price">
-                            400 000 so'm
+                            {active_order.price} {t("sum")}
                         </div>
                     </div>
                 </div>
                 <div className="buttons">
-                    <div onClick={() => showModalContent("cancel-order")} className="cancel-btn">
+                    <div onClick={() => showModalContent("cancel-order", active_order.id)} className="cancel-btn">
                         <img src="./images/x.webp" alt="cancel" loading="lazy"/>
-                        Bekor qilish
+                        {t("cancel_order")}
                     </div>
-                    <div className="line"></div>
-                    <div className="share-btn">
-                        <img src="./images/share.webp" alt="cancel" loading="lazy"/>
-                        Ulashish
-                    </div>
+                    {/*<div className="line"></div>*/}
+                    {/*<div className="share-btn">*/}
+                    {/*    <img src="./images/share.webp" alt="cancel" loading="lazy"/>*/}
+                    {/*    Ulashish*/}
+                    {/*</div>*/}
                 </div>
             </div>}
 
             {orderPage === 4 && <div className="get-driver">
-                <div className="header">
-                    Haydovchi ~10 daqiqada keladi
-                </div>
+                {/*<div className="header">*/}
+                {/*    Haydovchi ~10 daqiqada keladi*/}
+                {/*</div>*/}
                 <div className="header-content">
                     <div className="car-info">
-                        <div className="name-car">Oq Toyota Camry</div>
+                        <div className="name-car">
+                            {active_order.driver.car_color.translations[i18next.language].name}
+                            &ensp;
+                            {active_order.driver.car_make.translations[i18next.language].name}
+                            &ensp;
+                            {active_order.driver.car_model.translations[i18next.language].name}
+                        </div>
                         <div className="car-number">
-                            <div className="num">01</div>
+                            <div className="num">{active_order.driver.car_number.slice(0, 2)}</div>
                             <div className="line"></div>
-                            <div className="num">A 707 DA</div>
+                            <div className="num">{active_order.driver.car_number.slice(2)}</div>
                         </div>
                     </div>
                     <div className="car-img">
-                        <img src="./images/car-taxi.webp" alt="car" loading="lazy"/>
+                        <img src={active_order.car_category.icon} alt="car" loading="lazy"/>
                     </div>
                 </div>
                 <div className="driver-info">
                     <div className="person-img">
-                        <img src="./images/driver.png" alt=""/>
+                        <img src={active_order.driver.profile_image} alt=""/>
                     </div>
                     <div className="info">
-                        <div className="name">Alisher Akbarov</div>
+                        <div className="name">
+                            {active_order.driver.first_name}
+                            &ensp;
+                            {active_order.driver.last_name}
+                        </div>
                         <div className="information">
                             <div className="rate">
-                                <div className="label">Reyting:</div>
+                                <div className="label">{t("rate")}</div>
                                 <div className="info">
                                     <img src="./images/star.webp" alt="star" loading="lazy"/>
-                                    5.5
+                                    {active_order.driver.rate}
                                 </div>
                             </div>
                             <div className="line"></div>
                             <div className="count">
-                                <div className="label">Safarlar:</div>
-                                <div className="info">1,230</div>
+                                <div className="label">{t("orders_finishet")}</div>
+                                <div className="info">
+                                    {active_order.driver.finished_orders_count}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -495,135 +712,156 @@ const Order = () => {
                 <div className="button-call">
                     <div className="call-driver">
                         <img src="./images/phone.png" alt="phone" loading="lazy"/>
-                        Qo'ng'iroq qilish
+                        <a href={`tel:${active_order.driver.phone}`}> {active_order.driver.phone}</a>
                     </div>
                 </div>
                 <div className="location-box">
                     <div className="location-from">
-                        <div className="circle-warpper">
-                            <div className="circle"></div>
-                        </div>
                         <div className="location-text">
-                            Chilonzor tumani, Chilonzor M-mavze, 11, Toshkent
+                            {active_order.pick_up_locations.map((item_loc, index_loc) => {
+                                return <div key={index_loc} className="location-from">
+                                    <div className="circle-warpper">
+                                        <div className="circle"></div>
+                                    </div>
+                                    <div className="location-text">
+                                        {item_loc.address}
+                                    </div>
+                                </div>
+                            })}
                         </div>
                     </div>
-
                     <div className="line"></div>
-
                     <div className="location-to">
-                        <div className="circle-warpper">
-                            <div className="circle"></div>
-                        </div>
                         <div className="location-text">
-                            Andijon viloyati, Baliqchi tumani, Baliqchi hokimyati
+                            {active_order.drop_off_locations.map((item_loc, index_loc) => {
+                                return <div key={index_loc} className="location-to">
+                                    <div className="circle-warpper">
+                                        <div className="circle"></div>
+                                    </div>
+                                    <div className="location-text">
+                                        {item_loc.address}
+                                    </div>
+                                </div>
+                            })}
                         </div>
                     </div>
                 </div>
                 <div className="info-box">
                     <div className="information">
                         <div className="label">
-                            Tarif
+                            {t("direction")}
                         </div>
                         <div className="val">
-                            Ekonom
+                            {active_order.car_service && active_order.car_service.translations[i18next.language].name}
                         </div>
                     </div>
-
                     <div className="information">
                         <div className="label">
-                            To‘lov turi
+                            {t("tarif")}
                         </div>
                         <div className="val">
-                            <img src="./images/money.webp" alt="money" loading="lazy"/>Naqt
+                            {active_order.car_category && active_order.car_category.translations[i18next.language].name}
                         </div>
                     </div>
-
                     <div className="information">
                         <div className="label">
-                            Buyurtma raqami
+                            {t("payment_type")}
                         </div>
                         <div className="val">
-                            4922184921
+                            {active_order.payment_type}
                         </div>
                     </div>
-
                     <div className="information">
                         <div className="label">
-                            Safar kuni va vaqti
+                            {t("order_id")}
                         </div>
                         <div className="val">
-                            13-oktyabr, 12:00
+                            {active_order.id}
+                        </div>
+                    </div>
+                    <div className="information">
+                        <div className="label">
+                            {t("date_time")}
+                        </div>
+                        <div className="val">
+                            {active_order.pick_up_date}
                         </div>
                     </div>
                 </div>
                 <div className="price-order">
                     <div className="information">
                         <div className="label">
-                            Yo‘lovchilar soni
+                            {t("passangers_count")}
                         </div>
                         <div className="val">
-                            <img src="./images/users.webp" alt="users" loading="lazy"/>
-                            4 kishi
+                            {active_order.passanger_count} kishi
                         </div>
                     </div>
 
                     <div className="information">
                         <div className="label">
-                            Yo‘l haqi summasi
+                            {t("price")}
                         </div>
                         <div className="val-price">
-                            400 000 so'm
+                            {active_order.price} {t("sum")}
                         </div>
                     </div>
                 </div>
                 <div className="buttons">
-                    <div onClick={() => showModalContent("cancel-order")} className="cancel-btn">
+                    <div onClick={() => showModalContent("cancel-order", active_order.id)} className="cancel-btn">
                         <img src="./images/x.webp" alt="cancel" loading="lazy"/>
-                        Bekor qilish
-                    </div>
-                    <div className="line"></div>
-                    <div className="share-btn">
-                        <img src="./images/share.webp" alt="cancel" loading="lazy"/>
-                        Ulashish
+                        {t("cancel_order")}
                     </div>
                 </div>
             </div>}
 
             {orderPage === 5 && <div className="rate-driver">
-                <div className="header">
-                    ~5 soatda yetib boramiz
-                </div>
+                {/*<div className="header">*/}
+                {/*    ~5 soatda yetib boramiz*/}
+                {/*</div>*/}
                 <div className="header-content">
                     <div className="car-info">
-                        <div className="name-car">Oq Toyota Camry</div>
+                        <div className="name-car">
+                            {active_order.driver.car_color.translations[i18next.language].name}
+                            &ensp;
+                            {active_order.driver.car_make.translations[i18next.language].name}
+                            &ensp;
+                            {active_order.driver.car_model.translations[i18next.language].name}
+                        </div>
                         <div className="car-number">
-                            <div className="num">01</div>
+                            <div className="num">{active_order.driver.car_number.slice(0, 2)}</div>
                             <div className="line"></div>
-                            <div className="num">A 707 DA</div>
+                            <div className="num">{active_order.driver.car_number.slice(2)}</div>
                         </div>
                     </div>
                     <div className="car-img">
-                        <img src="./images/car-taxi.webp" alt="car" loading="lazy"/>
+                        <img src={active_order.car_category.icon} alt="car" loading="lazy"/>
                     </div>
                 </div>
                 <div className="driver-info">
                     <div className="person-img">
-                        <img src="./images/driver.png" alt=""/>
+                        <img src={active_order.driver.profile_image} alt=""/>
                     </div>
                     <div className="info">
-                        <div className="name">Alisher Akbarov</div>
+                        <div className="name">
+                            {active_order.driver.first_name}
+                            &ensp;
+                            {active_order.driver.last_name}
+                        </div>
                         <div className="information">
                             <div className="rate">
-                                <div className="label">Reyting:</div>
+                                <div className="label">{t("rate")}</div>
                                 <div className="info">
                                     <img src="./images/star.webp" alt="star" loading="lazy"/>
-                                    5.5
+                                    {active_order.driver.rate}
                                 </div>
                             </div>
                             <div className="line"></div>
                             <div className="count">
-                                <div className="label">Safarlar:</div>
-                                <div className="info">1,230</div>
+                                <div className="label">{t("orders_finishet")}</div>
+                                <div className="info">
+                                    {active_order.driver.finished_orders_count}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -653,119 +891,128 @@ const Order = () => {
                 </div>
                 <div className="location-box">
                     <div className="location-from">
-                        <div className="circle-warpper">
-                            <div className="circle"></div>
-                        </div>
                         <div className="location-text">
-                            Chilonzor tumani, Chilonzor M-mavze, 11, Toshkent
+                            {active_order.pick_up_locations.map((item_loc, index_loc) => {
+                                return <div key={index_loc} className="location-from">
+                                    <div className="circle-warpper">
+                                        <div className="circle"></div>
+                                    </div>
+                                    <div className="location-text">
+                                        {item_loc.address}
+                                    </div>
+                                </div>
+                            })}
                         </div>
                     </div>
-
                     <div className="line"></div>
-
                     <div className="location-to">
-                        <div className="circle-warpper">
-                            <div className="circle"></div>
-                        </div>
                         <div className="location-text">
-                            Andijon viloyati, Baliqchi tumani, Baliqchi hokimyati
+                            {active_order.drop_off_locations.map((item_loc, index_loc) => {
+                                return <div key={index_loc} className="location-to">
+                                    <div className="circle-warpper">
+                                        <div className="circle"></div>
+                                    </div>
+                                    <div className="location-text">
+                                        {item_loc.address}
+                                    </div>
+                                </div>
+                            })}
                         </div>
                     </div>
                 </div>
                 <div className="info-box">
                     <div className="information">
                         <div className="label">
-                            Tarif
+                            {t("direction")}
                         </div>
                         <div className="val">
-                            Ekonom
+                            {active_order.car_service && active_order.car_service.translations[i18next.language].name}
                         </div>
                     </div>
-
                     <div className="information">
                         <div className="label">
-                            To‘lov turi
+                            {t("tarif")}
                         </div>
                         <div className="val">
-                            <img src="./images/money.webp" alt="money" loading="lazy"/>Naqt
+                            {active_order.car_category && active_order.car_category.translations[i18next.language].name}
                         </div>
                     </div>
-
                     <div className="information">
                         <div className="label">
-                            Buyurtma raqami
+                            {t("payment_type")}
                         </div>
                         <div className="val">
-                            4922184921
+                            {active_order.payment_type}
                         </div>
                     </div>
-
                     <div className="information">
                         <div className="label">
-                            Safar kuni va vaqti
+                            {t("order_id")}
                         </div>
                         <div className="val">
-                            13-oktyabr, 12:00
+                            {active_order.id}
+                        </div>
+                    </div>
+                    <div className="information">
+                        <div className="label">
+                            {t("date_time")}
+                        </div>
+                        <div className="val">
+                            {active_order.pick_up_date}
                         </div>
                     </div>
                 </div>
                 <div className="price-order">
                     <div className="information">
                         <div className="label">
-                            Yo‘lovchilar soni
+                            {t("passangers_count")}
                         </div>
                         <div className="val">
-                            <img src="./images/users.webp" alt="users" loading="lazy"/>
-                            4 kishi
+                            {active_order.passanger_count} kishi
                         </div>
                     </div>
 
                     <div className="information">
                         <div className="label">
-                            Yo‘l haqi summasi
+                            {t("price")}
                         </div>
                         <div className="val-price">
-                            400 000 so'm
+                            {active_order.price} {t("sum")}
                         </div>
                     </div>
                 </div>
             </div>}
 
-
             {orderPage === 6 && <div className="info-box">
                 <div className="header">
                     <img onClick={() => setOrderPage(0)} src="./images/prev.png" alt="prev" loading="lazy"/>
-
                     <div className="title">
-                        Qo'shimcha malumotlar
+                        {t("plus_info")}
                     </div>
                 </div>
-
                 <div className="form-date">
                     <div className="label">
-                        Safar sanasi
+                        {t("date")}
                     </div>
                     <div className="input-time">
                         <input value={pick_up_date} onChange={(e) => setPick_up_date(e.target.value)} type="date"/>
                     </div>
                 </div>
-
                 <div className="form-date">
                     <div className="label">
-                        Olib ketish vaqti
+                        {t("time")}
                     </div>
                     <div className="input-time">
                         <input value={pick_up_time} onChange={(e) => setPick_up_time(e.target.value)} type="time"/>
                     </div>
                 </div>
-
                 <div className="client-count">
                     <div className="title">
-                        Yo'lovchialr soni
+                        {t("passangers_count")}
                     </div>
                     <div className="counter">
                         <div className="label">
-                            Yo'lovchilar soni
+                            {t("passangers_count")}
                         </div>
                         <div className="count">
                             <div onClick={() => {
@@ -792,7 +1039,7 @@ const Order = () => {
                         <div className="left">
                             <div className="text">
                                 <div className="name">
-                                    Barcha orindiqlarni band qilish
+                                    {t("all_seats")}
                                 </div>
                             </div>
                         </div>
@@ -802,22 +1049,130 @@ const Order = () => {
                         </div>
                     </div>
                 </div>
-
                 <div className="form-date">
                     <div className="label">
-                        Yo'l haqqi narxi
+                        {t("price")}
                     </div>
                     <div className="input-time">
-                        120 000 so'm
+                        {price_list.map((item, index) => {
+                            if (active_price === item.category.id) {
+                                return <span key={index}>{item.cost} {t("sum")}</span>
+                            }
+                        })}
                     </div>
-                </div>
-            </div>}
-            {orderPage === 6 && <div className="button-box">
-                <div className="button">
-                    Buyurtma berish
                 </div>
             </div>}
 
+            {orderPage === 7 && <div className="info-box-postal">
+                <div className="header">
+                    <img onClick={() => setOrderPage(0)} src="./images/prev.png" alt="prev" loading="lazy"/>
+                    <div className="title">
+                        {t("plus_info")}
+                    </div>
+                </div>
+                <div className="info-postal">
+                    <div className="title">{t("sender")}</div>
+                    <div className="person-info">
+                        <div className="left-icon-person">
+                            <img src="./images/person.webp" alt="person"/>
+                        </div>
+                        <div className="right-info">
+                            <div className="title">
+                                {t("sender_location")}
+                            </div>
+                            <div className="bottom-info">
+                                {PickUpLocations[0].address}
+                            </div>
+                        </div>
+                    </div>
+                    <div className="person-info">
+                        <div className="left-icon-phone">
+                            <img src="./images/phone-person.png" alt="person"/>
+                        </div>
+                        <div className="right-info">
+                            <div className="title">
+                                {t("phone")}
+                            </div>
+                            <div className="bottom-info">
+                                <input value={sender_phone} onChange={(e) => setsender_phone(e.target.value)}
+                                       placeholder={t("phone_form")} type="number"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div className="info-postal">
+                    <div className="title">{t("postal")}</div>
+                    <div className="person-info">
+                        <div className="left-icon-postal">
+                            <img src="./images/package_2_fill.webp" alt="person"/>
+                        </div>
+                        <div className="right-info">
+                            <div className="title">
+                                {t("postal_location")}
+                            </div>
+                            <div className="bottom-info">
+                                {DropOffLocations[0].address}
+                            </div>
+                        </div>
+                    </div>
+                    <div className="person-info">
+                        <div className="left-icon-phone">
+                            <img src="./images/phone-person.png" alt="person"/>
+                        </div>
+                        <div className="right-info">
+                            <div className="title">
+                                {t("phone")}
+                            </div>
+                            <div className="bottom-info">
+                                <input value={receiver_phone} onChange={(e) => setReceiverPhone(e.target.value)}
+                                       placeholder={t("phone_form")} type="number"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div className="order-info">
+                    <div className="title">
+                        {t("about_order")}
+                    </div>
+                    <div className="payment-who">
+                        <div className="title">{t("payment_who")}</div>
+
+                        <div className="on-of">
+                            <div onClick={() => setPayer("sender")} className={`of ${payer === "sender" ? "on" : ""}`}>
+                                {t("person1")}
+                            </div>
+                            <div onClick={() => setPayer("receiver")}
+                                 className={`of ${payer === "receiver" ? "on" : ""}`}>
+                                {t("person2")}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="form-date">
+                        <div className="label">
+                            {t("date")}
+                        </div>
+                        <div className="input-time">
+                            <input value={pick_up_date} onChange={(e) => setPick_up_date(e.target.value)} type="date"/>
+                        </div>
+                    </div>
+
+                    <div className="form-date">
+                        <div className="label">
+                            {t("time")}
+                        </div>
+                        <div className="input-time">
+                            <input value={pick_up_time} onChange={(e) => setPick_up_time(e.target.value)} type="time"/>
+                        </div>
+                    </div>
+                </div>
+            </div>}
+
+            {(orderPage === 6 || orderPage === 7) && <div onClick={SendOrder} className="button-box">
+                <div className="button">
+                    {t("order")}
+                </div>
+            </div>}
         </div>
     );
 };

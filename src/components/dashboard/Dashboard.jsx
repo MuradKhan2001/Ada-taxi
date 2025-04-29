@@ -3,9 +3,8 @@ import "./style-dashboard.scss";
 import Header from "../header/Header";
 import {
     GoogleMap,
-    Marker,
-    useLoadScript,
-    MarkerClusterer,
+    MarkerF,
+    useLoadScript
 } from "@react-google-maps/api";
 import {GOOGLE_MAPS_API_KEY} from "./googleMapsApi";
 import i18next from "i18next";
@@ -15,10 +14,12 @@ import {CSSTransition} from "react-transition-group";
 import {hideModal, showModals} from "../../redux/ModalContent";
 import {useDispatch, useSelector} from "react-redux";
 import axios from "axios";
+import {useTranslation} from "react-i18next";
 
 const libraries = ["places"];
 
 const Dashboard = () => {
+    const {t} = useTranslation();
     const baseUrl = useSelector((store) => store.baseUrl.data)
     const [invalidService, setInvalidService] = useState("finished");
     const [showModal, setShowModal] = useState(false);
@@ -28,6 +29,11 @@ const Dashboard = () => {
     const nodeRef = useRef(null);
     const [history, setHistory] = useState([]);
     const [order_info, setOrder_info] = useState({});
+
+    const selectAddressIcon = {
+        url: "./images/address.png",
+        scaledSize: {width: 40, height: 50},
+    };
 
     useEffect(() => {
         navigator.geolocation.getCurrentPosition((position) => {
@@ -71,7 +77,6 @@ const Dashboard = () => {
     };
 
     if (!isLoaded) return <Loader/>;
-
     return (
         <>
             <div className="dashboard-wrapper">
@@ -80,15 +85,14 @@ const Dashboard = () => {
                     nodeRef={nodeRef}
                     timeout={300}
                     classNames="alert"
-                    unmountOnExit
-                >
+                    unmountOnExit>
                     <div
                         className={`modal-sloy-orders ${showModal ? "disabled" : ""}`}>
                         <div ref={nodeRef} className="modal-card">
                             <div className="header-buttons">
                                 <div className="header">
                                     <h1 className="title">
-                                        Buyurtmalarim
+                                        {t("my_orders")}
                                     </h1>
                                     <div className="cancel-btn">
                                         <img
@@ -98,17 +102,16 @@ const Dashboard = () => {
                                             src="./images/cancel.webp"
                                             alt="cancel"
                                         />
-
                                     </div>
                                 </div>
                                 <div className="on-of">
                                     <div onClick={() => setInvalidService("finished")}
                                          className={`of ${invalidService === "finished" ? "on" : ""}`}>
-                                        Yakunlangan
+                                        {t("finished_order")}
                                     </div>
                                     <div onClick={() => setInvalidService("rejected")}
                                          className={`of ${invalidService === "rejected" ? "on" : ""}`}>
-                                        Bekor qilingan
+                                        {t("concelled_order")}
                                     </div>
                                 </div>
                             </div>
@@ -153,7 +156,7 @@ const Dashboard = () => {
                                                         </div>
                                                     </div>
                                                     <div className="price">
-                                                        {item.price} so'm
+                                                        {item.price} {t("sum")}
                                                     </div>
                                                 </div>
                                             </div>
@@ -181,7 +184,6 @@ const Dashboard = () => {
                                     />
                                 </div>
                             </div>
-
                             {order_info.driver && order_info.client && order_info && <div className="content">
                                 <div className="header-content">
                                     <div className="car-info">
@@ -200,7 +202,6 @@ const Dashboard = () => {
                                         <img src={baseUrl + order_info.car_category.icon} alt="car" loading="lazy"/>
                                     </div>
                                 </div>
-
                                 <div className="driver-info">
                                     <div className="person-img">
                                         <img src={baseUrl + order_info.driver.profile_image} alt=""/>
@@ -213,7 +214,7 @@ const Dashboard = () => {
                                         </div>
                                         <div className="information">
                                             <div className="rate">
-                                                <div className="label">Reyting:</div>
+                                                <div className="label">{t("rate")}</div>
                                                 <div className="info">
                                                     <img src="./images/star.webp" alt="star" loading="lazy"/>
                                                     {order_info.driver.rate}
@@ -221,13 +222,12 @@ const Dashboard = () => {
                                             </div>
                                             <div className="line"></div>
                                             <div className="count">
-                                                <div className="label">Safarlar:</div>
+                                                <div className="label">{t("orders_finishet")}</div>
                                                 <div className="info">{order_info.driver.finished_orders_count}</div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-
                                 <div className="location-box">
                                     {order_info.pick_up_locations.map((item_loc, index_loc) => {
                                         return <div key={index_loc} className="location-from">
@@ -251,16 +251,21 @@ const Dashboard = () => {
                                         </div>
                                     })}
                                 </div>
-
                                 <div className="information-box-order">
                                     <div className="list">
-                                        <div className="title">Tarif</div>
+                                        <div className="title">{t("direction")}</div>
+                                        <div className="value">
+                                            {order_info.car_service.translations[i18next.language].name}
+                                        </div>
+                                    </div>
+                                    <div className="list">
+                                        <div className="title">{t("tarif")}</div>
                                         <div className="value">
                                             {order_info.car_category.translations[i18next.language].name}
                                         </div>
                                     </div>
                                     <div className="list">
-                                        <div className="title">To'lov turi</div>
+                                        <div className="title">{t("payment_type")}</div>
                                         <div className="value">
                                             <img src="./images/money.webp" alt="money" loading="lazy"/>
                                             {order_info.payment_type === "cash" && "Naqt"}
@@ -268,38 +273,38 @@ const Dashboard = () => {
                                         </div>
                                     </div>
                                     <div className="list">
-                                        <div className="title">Buyurtma raqami</div>
+                                        <div className="title">{t("order_id")}</div>
                                         <div className="value">{order_info.id}</div>
                                     </div>
                                     <div className="list">
-                                        <div className="title">Safar kuni va vaqti</div>
+                                        <div className="title">{t("date_time")}</div>
                                         <div className="value">
                                             {order_info.end_date ? order_info.end_date : order_info.pick_up_date}
                                         </div>
                                     </div>
                                 </div>
-
                                 <div className="bottom-info">
                                     <div className="list">
-                                        <div className="title">Yo'lovchilar soni</div>
+                                        <div className="title">{t("passangers_count")}</div>
                                         <div className="value">
                                             <img src="./images/users.webp" alt="users" loading="lazy"/>
-                                            {order_info.passanger_count} kishi
+                                            {order_info.passanger_count}
                                         </div>
                                     </div>
                                     <div className="list">
-                                        <div className="title">Narx</div>
+                                        <div className="title">
+                                            {t("price")}
+                                        </div>
                                         <div className="value price">
-                                            {order_info.price} so'm</div>
+                                            {order_info.price} {t("sum")}
+                                        </div>
                                     </div>
                                 </div>
-
                                 <div className="del-btn">
                                     <img src="./images/trash.webp" alt="del" loading="lazy"/>
-                                    Ma'lumotni o'chirish
+                                    {t("del_info")}
                                 </div>
                             </div>}
-
                         </div>
                     </div>
                 </CSSTransition>
@@ -310,18 +315,22 @@ const Dashboard = () => {
 
                 <div className="bottom-side">
                     <GoogleMap
-                        zoom={10}
+                        zoom={13}
                         center={center}
                         options={options}
                         mapContainerClassName="map"
                     >
+                        {center && (
+                            <MarkerF
+                                position={center}
+                                icon={selectAddressIcon}
+                            />)}
                     </GoogleMap>
-
                     <Order/>
-
                     <div className="app-box">
                         <div className="top-side-app">
-                            <a href="#" className="button">
+                            <a target="_blank" href="https://apps.apple.com/us/app/adataxi/id6744370881"
+                               className="button">
                                 <div className="left">
                                     <img src="./images/apple.webp" alt="apple" loading="lazy"/>
                                 </div>
@@ -330,7 +339,8 @@ const Dashboard = () => {
                                     <b>App store</b>
                                 </div>
                             </a>
-                            <a href="#" className="button">
+                            <a target="_blank" href="https://play.google.com/store/apps/details?id=uz.adataxi.client"
+                               className="button">
                                 <div className="left">
                                     <img src="./images/google.webp" alt="google" loading="lazy"/>
                                 </div>
@@ -341,11 +351,14 @@ const Dashboard = () => {
                             </a>
                         </div>
                         <div className="bottom-side-app">
-                            <a href="#">
+                            <a target="_blank" href="https://adataxi.uz/offer-app">
                                 © 2025 ООО «ADA TAXI»
-                                Foydalanish shartlari
+                                {t("offer")}
                             </a>
                         </div>
+                    </div>
+                    <div className="text-warning">
+                        {t("map_warning")}
                     </div>
                 </div>
             </div>
@@ -361,11 +374,10 @@ const Dashboard = () => {
                     <span> MOBIL TELEFON </span>
                     qurilmalari orqali foydalasnish uchun App store, Play marketdan yuklab olishingiz mumkin!
                 </div>
-
-
                 <div className="app-box">
                     <div className="top-side-app">
-                        <a href="#" className="button">
+                        <a target="_blank" href="https://apps.apple.com/us/app/adataxi/id6744370881"
+                           className="button">
                             <div className="left">
                                 <img src="./images/apple.webp" alt="apple" loading="lazy"/>
                             </div>
@@ -374,7 +386,8 @@ const Dashboard = () => {
                                 <b>App store</b>
                             </div>
                         </a>
-                        <a href="#" className="button">
+                        <a target="_blank" href="https://play.google.com/store/apps/details?id=uz.adataxi.client"
+                           className="button">
                             <div className="left">
                                 <img src="./images/google.webp" alt="google" loading="lazy"/>
                             </div>
@@ -385,13 +398,12 @@ const Dashboard = () => {
                         </a>
                     </div>
                     <div className="bottom-side-app">
-                        <a href="#">
+                        <a target="_blank" href="https://adataxi.uz/offer-app">
                             © 2025 ООО «ADA TAXI»
-                            Foydalanish shartlari
+                            {t("offer")}
                         </a>
                     </div>
                 </div>
-
             </div>
         </>
     );

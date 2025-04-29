@@ -382,6 +382,10 @@
       margin: 22px;
       width: 350px;
       height: max-content;
+      a {
+        text-decoration: none;
+        color: black;
+      }
 
       .cancel-btn {
         width: 100%;
@@ -465,7 +469,13 @@
           .name {
             font-size: 15px;
 
+            a {
+              text-decoration: none;
+              color: black;
+            }
           }
+
+
         }
 
         .icon-more {
@@ -578,6 +588,7 @@
           -webkit-appearance: none;
           margin: 0;
         }
+
         input[type="number"] {
           -moz-appearance: textfield;
         }
@@ -607,6 +618,7 @@
       .btn-disablet {
         background: rgba(165, 165, 165, 0.1);
         color: #737373;
+
         &:hover {
           background: rgba(165, 165, 165, 0.1);
         }

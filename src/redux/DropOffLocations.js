@@ -19,17 +19,27 @@ export const DropOffLocations = createSlice({
         delLocationsDrop: (state, {payload}) => {
             state.data = state.data.filter((item) => item.number !== payload)
         },
-        updateDropLocationDrop: (state, { payload }) => {
-            const { index, newData } = payload;
+        updateDropLocationDrop: (state, {payload}) => {
+            const {index, newData} = payload;
             if (state.data[index]) {
                 state.data[index] = {
                     ...state.data[index],
                     ...newData
                 };
             }
+        },
+        clearDropOffLocations: (state) => {
+            state.data = [
+                {
+                    address: "",
+                    latitude: null,
+                    longitude: null,
+                    number: 1
+                }
+            ];
         }
     }
 })
 
-export const {delLocationsDrop, addLocationsDrop, updateDropLocationDrop} = DropOffLocations.actions
+export const {delLocationsDrop, clearDropOffLocations,addLocationsDrop, updateDropLocationDrop} = DropOffLocations.actions
 export default DropOffLocations.reducer

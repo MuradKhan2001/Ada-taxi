@@ -1,38 +1,27 @@
-import {useRef, useState, useMemo, useEffect} from "react";
+import React, {useRef, useState, useEffect, useContext} from "react";
 import {CSSTransition} from "react-transition-group";
 import {useSelector, useDispatch} from "react-redux";
 import {hideModal, showModals} from "../../redux/ModalContent";
 import PhoneInput from "react-phone-number-input";
 import AuthCode from "react-auth-code-input";
-import {useNavigate} from "react-router-dom";
 import axios from "axios";
-import {GoogleMap, Marker, useLoadScript} from "@react-google-maps/api";
-import {Combobox, ComboboxInput, ComboboxOption} from "@reach/combobox";
-import i18next from "i18next";
-import {GOOGLE_MAPS_API_KEY} from "./googleMapsApi";
 import {useOnKeyPress} from "./useOnKeyPress";
 import "./style.scss";
 import {addAlert, delAlert} from "../../redux/AlertsBox";
-import {updateDropLocationPickUp} from "../../redux/PickUpLocations";
-import {updateDropLocationDrop} from "../../redux/DropOffLocations";
 import {AddClientInfo} from "../../redux/AddClient";
 import {changePayment} from "../../redux/PaymentType";
 import {useTranslation} from "react-i18next";
-import usePlacesAutocomplete, {getGeocode, getLatLng} from "use-places-autocomplete";
 import "@reach/combobox/styles.css";
-import Loader from "../loader/Loader";
-
-const libraries = ["places"];
+import {webSockedContext} from "../app/App";
+import i18next from "i18next";
 
 const Modal = () => {
+    let webSocked = useContext(webSockedContext);
     const {t} = useTranslation();
-    const navigate = useNavigate();
     const nodeRef = useRef(null);
     const baseUrl = useSelector((store) => store.baseUrl.data);
     const dispatch = useDispatch();
     const modalContent = useSelector((store) => store.ModalContent.data);
-    const PickUpLocations = useSelector((store) => store.PickUpLocations.data)
-    const DropOffLocations = useSelector((store) => store.DropOffLocations.data)
     const PaymentType = useSelector((store) => store.PaymentType.data)
 
     const [phone, setPhone] = useState("");
@@ -41,9 +30,7 @@ const Modal = () => {
     const [minutes, setMinutes] = useState(0);
     const [seconds, setSeconds] = useState(60);
     const [reason, setReason] = useState(0);
-    const [center, setCenter] = useState(null);
-    const [searchLocationAddress, setSearchLocationAddress] = useState("");
-    const [selected, setSelected] = useState(null);
+    const [reasonList, setReasonList] = useState([]);
     const [other_clinet_phone, setOtherClinetPhone] = useState("");
     const [other_clinet_name, setOtherClinetName] = useState("");
 
@@ -68,51 +55,14 @@ const Modal = () => {
     }, [checkCode ? seconds : null]);
 
     useEffect(() => {
-        navigator.geolocation.getCurrentPosition((position) => {
-            const {latitude, longitude} = position.coords;
-            let locMy = {lat: latitude, lng: longitude};
-            setCenter(locMy);
-        });
+        axios.get(`${baseUrl}/api/v1/reject-reason/client/`, {
+            headers: {
+                "Authorization": `Token ${localStorage.getItem("token")}`
+            }
+        }).then((response) => {
+            setReasonList(response.data);
+        })
     }, []);
-
-    useEffect(() => {
-        if (modalContent.location_status === "pick_up") {
-            if (PickUpLocations[modalContent.location_num].address) {
-                let locMy = {
-                    lat: PickUpLocations[modalContent.location_num].latitude,
-                    lng: PickUpLocations[modalContent.location_num].longitude
-                };
-                setCenter(locMy);
-                setSelected(locMy)
-                setSearchLocationAddress(PickUpLocations[modalContent.location_num].address)
-            } else {
-                navigator.geolocation.getCurrentPosition((position) => {
-                    const {latitude, longitude} = position.coords;
-                    let locMy = {lat: latitude, lng: longitude};
-                    setCenter(locMy);
-                });
-            }
-        }
-
-        if (modalContent.location_status === "drop_off") {
-            if (DropOffLocations[modalContent.location_num].address) {
-                let locMy = {
-                    lat: DropOffLocations[modalContent.location_num].latitude,
-                    lng: DropOffLocations[modalContent.location_num].longitude
-                };
-                setCenter(locMy);
-                setSelected(locMy)
-                setSearchLocationAddress(DropOffLocations[modalContent.location_num].address)
-            } else {
-                navigator.geolocation.getCurrentPosition((position) => {
-                    const {latitude, longitude} = position.coords;
-                    let locMy = {lat: latitude, lng: longitude};
-                    setCenter(locMy);
-                });
-            }
-        }
-
-    }, [modalContent.status === "add-location"]);
 
     const logOut = () => {
         localStorage.removeItem("token");
@@ -151,7 +101,7 @@ const Modal = () => {
                         let idAlert = Date.now();
                         let alert = {
                             id: idAlert,
-                            text: "Telefon raqam noto'g'ri",
+                            text: t("error_phone"),
                             img: "./images/yellow.svg",
                             color: "#FFFAEA",
                         };
@@ -166,20 +116,19 @@ const Modal = () => {
 
     const CheckCode = () => {
         axios
-            .post(`${baseUrl}/api/v1/auth/test_verify_code/`, {
+            .post(`${baseUrl}/api/v1/auth/verify_code/`, {
                 user: localStorage.getItem("userId"),
                 code: code,
                 role: "client"
             })
             .then((response) => {
-
                 localStorage.setItem("token", response.data.token);
                 dispatch(hideModal({show: false}))
                 window.location.pathname = "/edit-profile";
                 let idAlert = Date.now();
                 let alert = {
                     id: idAlert,
-                    text: "Siz ro'yxatdan o'tdingiz!",
+                    text: t("register"),
                     img: "./images/green.svg",
                     color: "#FFFAEA",
                 };
@@ -187,7 +136,6 @@ const Modal = () => {
                 setTimeout(() => {
                     dispatch(delAlert(idAlert));
                 }, 5000);
-
             })
             .catch((error) => {
                 if (error.response.status === 400) {
@@ -195,7 +143,7 @@ const Modal = () => {
                         let idAlert = Date.now();
                         let alert = {
                             id: idAlert,
-                            text: "Kiritilgan kod notog'ri!",
+                            text: t("error_code"),
                             img: "./images/red.svg",
                             color: "#FFFAEA",
                         };
@@ -207,226 +155,6 @@ const Modal = () => {
                 }
             });
     };
-
-    const selectAddressIcon = {
-        url: "./images/address.png",
-        scaledSize: {width: 40, height: 50},
-    };
-
-    const PlacesAutocomplete = ({setSelected}) => {
-        const {
-            ready,
-            value,
-            setValue,
-            suggestions: {status, data},
-            clearSuggestions,
-        } = usePlacesAutocomplete({
-            requestOptions: {
-                language: i18next.language,
-            },
-        });
-
-        const handleSelect = async (address) => {
-            const results = await getGeocode({address});
-            const {lat, lng} = await getLatLng(results[0]);
-            let locMy = {lat, lng};
-            const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&lan=en`;
-
-            axios
-                .get(`${url}`, {
-                    headers: {
-                        "Accept-Language": i18next.language,
-                    },
-                })
-                .then((res) => {
-                    let city = res.data.address.city;
-                    let suburb = res.data.address.suburb;
-                    let neighbourhood = res.data.address.neighbourhood;
-                    let county = res.data.address.county;
-                    let road = res.data.address.road;
-                    let fullAddress = `${
-                        city ? city + "," : ""
-                    } ${suburb ? suburb + "," : ""} 
-            ${neighbourhood ? neighbourhood + "," : ""} ${
-                        county ? county + "," : ""
-                    } ${road ? road : ""}`;
-
-                    if (res.data.address.country_code === "uz") {
-                        if (modalContent.location_status === "pick_up") {
-                            setSearchLocationAddress(fullAddress);
-                            setSelected(locMy);
-                            setCenter({lat, lng});
-                            setValue(address, false);
-                            clearSuggestions();
-                        } else if (modalContent.location_status === "drop_off") {
-                            setSearchLocationAddress(fullAddress);
-                            setSelected(locMy);
-                            setCenter({lat, lng});
-                            setValue(address, false);
-                            clearSuggestions();
-                        }
-
-                    } else {
-                        let idAlert = Date.now();
-                        let alert = {
-                            id: idAlert,
-                            text: t("errorLocations"),
-                            img: "./images/red.svg",
-                            color: "#FFEDF1",
-                        };
-                        dispatch(addAlert(alert));
-                        setTimeout(() => {
-                            dispatch(delAlert(idAlert));
-                        }, 5000);
-                    }
-
-
-                });
-        };
-
-        return (
-            <Combobox onSelect={handleSelect}>
-                <ComboboxInput
-                    value={value}
-                    onChange={(e) => setValue(e.target.value)}
-                    disabled={!ready}
-                    className="combobox-input"
-                    placeholder={t("input1")}
-                />
-
-                <div className="address-wrapper">
-                    <div className="list-address">
-                        {status === "OK" &&
-                            data.map(({place_id, description}) => (
-                                <ComboboxOption key={place_id} value={description}/>
-                            ))}
-                    </div>
-                </div>
-            </Combobox>
-        );
-    };
-    const ClicklLocation = (e) => {
-        let latitude = e.latLng.lat();
-        let longitude = e.latLng.lng();
-
-        let locMy = {lat: latitude, lng: longitude};
-
-        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&lan=en`;
-
-        axios
-            .get(`${url}`, {
-                headers: {
-                    "Accept-Language": i18next.language,
-                },
-            })
-            .then((res) => {
-                let city = res.data.address.city;
-                let suburb = res.data.address.suburb;
-                let neighbourhood = res.data.address.neighbourhood;
-                let county = res.data.address.county;
-                let road = res.data.address.road;
-                let fullAddress = `${
-                    city ? city + "," : ""
-                } ${suburb ? suburb + "," : ""} 
-            ${neighbourhood ? neighbourhood + "," : ""} ${
-                    county ? county + "," : ""
-                } ${road ? road : ""}`;
-
-                if (res.data.address.country_code === "uz") {
-                    if (modalContent.location_status === "pick_up") {
-                        setSearchLocationAddress(fullAddress);
-                        setSelected(locMy);
-                    } else if (modalContent.location_status === "drop_off") {
-                        setSearchLocationAddress(fullAddress);
-                        setSelected(locMy);
-                    }
-                } else {
-                    let idAlert = Date.now();
-                    let alert = {
-                        id: idAlert,
-                        text: t("errorLocations"),
-                        img: "./images/red.svg",
-                        color: "#FFEDF1",
-                    };
-                    dispatch(addAlert(alert));
-                    setTimeout(() => {
-                        dispatch(delAlert(idAlert));
-                    }, 5000);
-                }
-
-
-            });
-    };
-    const getAddressLocation = () => {
-        if (modalContent.location_status === "pick_up") {
-            if (searchLocationAddress && selected) {
-                dispatch(updateDropLocationPickUp({
-                    index: Number(modalContent.location_num),
-                    newData: {
-                        address: searchLocationAddress,
-                        latitude: Number(selected.lat.toString().slice(0, 9)),
-                        longitude: Number(selected.lng.toString().slice(0, 9))
-                    }
-                }));
-                dispatch(hideModal({show: false}))
-                setSelected(null);
-                setSearchLocationAddress("")
-            } else {
-                let idAlert = Date.now();
-                let alert = {
-                    id: idAlert,
-                    text: t("alert7"),
-                    img: "./images/yellow.svg",
-                    color: "#FFFAEA",
-                };
-                dispatch(addAlert(alert));
-                setTimeout(() => {
-                    dispatch(delAlert(idAlert));
-                }, 5000);
-            }
-        }
-        if (modalContent.location_status === "drop_off") {
-            if (searchLocationAddress && selected) {
-                dispatch(updateDropLocationDrop({
-                    index: Number(modalContent.location_num),
-                    newData: {
-                        address: searchLocationAddress,
-                        latitude: Number(selected.lat.toString().slice(0, 9)),
-                        longitude: Number(selected.lng.toString().slice(0, 9))
-                    }
-                }));
-                dispatch(hideModal({show: false}))
-                setSelected(null);
-                setSearchLocationAddress("")
-            } else {
-                let idAlert = Date.now();
-                let alert = {
-                    id: idAlert,
-                    text: t("alert7"),
-                    img: "./images/yellow.svg",
-                    color: "#FFFAEA",
-                };
-                dispatch(addAlert(alert));
-                setTimeout(() => {
-                    dispatch(delAlert(idAlert));
-                }, 5000);
-            }
-        }
-    };
-
-    const {isLoaded} = useLoadScript({
-        googleMapsApiKey: GOOGLE_MAPS_API_KEY,
-        libraries: libraries,
-        language: i18next.language,
-    });
-
-    const options = useMemo(
-        () => ({
-            disableDefaultUI: false,
-            clickableIcons: false,
-        }),
-        []
-    );
 
     const changePaymentType = (e) => {
         let payment = {payment_type: e}
@@ -442,9 +170,27 @@ const Modal = () => {
         dispatch(hideModal({show: false}))
     }
 
-    useOnKeyPress(checkCode ? CheckCode : HandleLogin, "Enter");
+    const cencelOrder = () => {
+        let data = {
+            command: "reject_order",
+            order_id: modalContent.id,
+            reason_id: reason
+        }
+        if (webSocked) {
+            webSocked.send(JSON.stringify(data));
+        } else {
+            let idAlertError = Date.now();
+            let alert = {
+                id: idAlertError,
+                text: t("net"),
+                img: "./images/red.svg",
+                color: "#FFEDF1",
+            };
+            dispatch(addAlert(alert));
+        }
+    }
 
-    if (!isLoaded) return <Loader/>;
+    useOnKeyPress(checkCode ? CheckCode : HandleLogin, "Enter");
     return (
         <CSSTransition
             in={modalContent.show && modalContent.status !== "orders"}
@@ -459,35 +205,33 @@ const Modal = () => {
 
                     {modalContent.status === "log-out" && (
                         <div className="confirm">
-                            <div className="toptext">Rostdan ham profildan chiqmoqchimisz?</div>
+                            <div className="toptext">{t("log_out_text1")}</div>
                             <div className="btns">
                                 <button
                                     className="not-out"
                                     onClick={() => dispatch(hideModal({show: false}))}
                                 >
-                                    Qolish
+                                    {t("log_out_text2")}
                                 </button>
-                                <button onClick={logOut}>Chiqish</button>
+                                <button onClick={logOut}>
+                                    {t("log_out_text3")}
+                                </button>
                             </div>
                         </div>
                     )}
 
                     {modalContent.status === "log-in" && (
                         <div className="login-box">
-
-
                             <div className="logo">
                                 <img src="./images/logo2.webp" alt=""/>
                             </div>
                             <h1 className="title">
-                                Xush kelibsiz!
+                                {t("login_text")}
                             </h1>
                             <p className="des">
-                                Buyurtma berishingiz uchun tizimga kirishingiz talab etiladi!
+                                {t("login_des")}
                             </p>
-
-                            <div className="label">Telefon raqamingiz:</div>
-
+                            <div className="label">{t("login_phone")}</div>
                             <PhoneInput
                                 id="phone"
                                 international
@@ -498,29 +242,25 @@ const Modal = () => {
 
                             <button onClick={HandleLogin} disabled={phone === "" || phone === undefined}
                                     className={`next-btn ${phone === "" || phone === undefined ? "disabled" : ""}`}>
-                                Davom etish
+                                {t("next")}
                             </button>
-
                         </div>
                     )}
 
                     {modalContent.status === "log-in-code" && (
                         <div className="login-box">
                             <h1 className="title">
-                                Maxsus kodni kiriting
+                                {t("enter_code")}
                             </h1>
                             <p className="des">
-                                Telefon raqamingizga maxsus kod SMS tarzda yuborildi
+                                {t("enter_code2")}
                             </p>
-
                             <div className="phone-number">
                                 {phone} <img onClick={() => {
                                 dispatch(showModals({show: true, status: "log-in"}));
                                 setCheckCode(false)
-                            }} src="./images/pencil.webp"
-                                             alt="edit-phone" loading="lazy"/>
+                            }} src="./images/pencil.webp" alt="edit-phone" loading="lazy"/>
                             </div>
-
                             <div className="inputs-verify-code">
                                 <AuthCode
                                     allowedCharacters="numeric"
@@ -537,16 +277,15 @@ const Modal = () => {
                                         {seconds < 10 ? `0${seconds}` : seconds}
                                     </div>
                                 </div>
-                            ) : <div onClick={HandleLogin} className="code-ref">Qayta yuborish</div>}
+                            ) : <div onClick={HandleLogin} className="code-ref">{t("enter_code3")}</div>}
 
                             <button
                                 disabled={code.trim().length < 5}
                                 onClick={CheckCode}
                                 className={` next-btn ${code.trim().length < 5 ? "disabled" : ""}`}
                             >
-                                Kirish
+                                {t("login")}
                             </button>
-
                         </div>
                     )}
 
@@ -560,16 +299,15 @@ const Modal = () => {
                                     src="./images/cancel.webp"
                                     alt="cancel"/>
                             </div>
-
                             <div className="logo">
                                 <img src="./images/logo2.webp" alt=""/>
                             </div>
                             <h1 className="title">
-                                O‘zingizga mos ilovani hozir yuklab oling!
+                                {t("title_apps")}
                             </h1>
-
                             <div className="top-side-app">
-                                <a href="#" className="button">
+                                <a target="_blank" href="https://apps.apple.com/us/app/adataxi/id6744370881"
+                                   className="button">
                                     <div className="left">
                                         <img src="./images/apple.webp" alt="apple" loading="lazy"/>
                                     </div>
@@ -578,7 +316,9 @@ const Modal = () => {
                                         <b>App store</b>
                                     </div>
                                 </a>
-                                <a href="#" className="button">
+                                <a target="_blank"
+                                   href="https://play.google.com/store/apps/details?id=uz.adataxi.client"
+                                   className="button">
                                     <div className="left">
                                         <img src="./images/google.webp" alt="google" loading="lazy"/>
                                     </div>
@@ -602,64 +342,69 @@ const Modal = () => {
                                     alt="cancel"/>
                             </div>
                             <h1 className="title">
-                                Ilova haqida
+                                {t("app_links")}
                             </h1>
-
                             <div className="logo-card">
-                                <div className="title">
-                                    Ishlab chiqaruvchilar
-                                </div>
-
                                 <div className="logo">
                                     <img src="./images/logo3.webp" alt=""/>
                                 </div>
-                                <div className="version">1.0.1 talqin</div>
                             </div>
-
-                            <div className="item line">
-                                <div className="left">
-                                    <div className="icon">
-                                        <img src="./images/phone.webp" alt="phone" loading="lazy"/>
+                            <a href="tel:+998915444499">
+                                <div className="item line">
+                                    <div className="left">
+                                        <div className="icon">
+                                            <img src="./images/phone.webp" alt="phone" loading="lazy"/>
+                                        </div>
+                                        <div className="name">
+                                            +998 91 544 44 99
+                                        </div>
                                     </div>
-                                    <div className="name">+998 99 999 99 99</div>
-                                </div>
-                                <div className="icon-more">
-                                    <img src="./images/more.webp" alt="more" loading="lazy"/>
-                                </div>
-                            </div>
-
-                            <div className="item">
-                                <div className="left">
-                                    <div className="icon">
-                                        <img src="./images/sms.webp" alt="phone" loading="lazy"/>
+                                    <div className="icon-more">
+                                        <img src="./images/more.webp" alt="more" loading="lazy"/>
                                     </div>
-                                    <div className="name">Mutxasisga yozish</div>
                                 </div>
-
-                                <div className="icon-more">
-                                    <img src="./images/more.webp" alt="more" loading="lazy"/>
+                            </a>
+                            <a target="_blank" href="https://t.me/adataxi_admin">
+                                <div className="item">
+                                    <div className="left">
+                                        <div className="icon">
+                                            <img src="./images/sms.webp" alt="phone" loading="lazy"/>
+                                        </div>
+                                        <div className="name">
+                                            Mutxasisga yozish
+                                        </div>
+                                    </div>
+                                    <div className="icon-more">
+                                        <img src="./images/more.webp" alt="more" loading="lazy"/>
+                                    </div>
                                 </div>
-                            </div>
-
+                            </a>
                             <div className="social-media">
                                 <div className="media">
-                                    <img src="./images/youtube.webp" alt="yotube" loading="lazy"/>
-                                    <div className="name">Youtube</div>
-                                </div>
+                                    <a target="_blank" href="https://www.instagram.com/adataxi_uz/">
+                                        <img src="./images/instagram.png" alt="instagram" loading="lazy"/>
+                                    </a>
 
-                                <div className="media">
-                                    <img src="./images/facebook.webp" alt="yotube" loading="lazy"/>
                                     <div className="name">Facebook</div>
                                 </div>
 
                                 <div className="media">
-                                    <img src="./images/telegram.webp" alt="yotube" loading="lazy"/>
+                                    <a target="_blank" href="https://t.me/+Ruz2cjoeIC4xNTU6">
+                                        <img src="./images/telegram.webp" alt="yotube" loading="lazy"/>
+                                    </a>
                                     <div className="name">Telegram</div>
                                 </div>
-                            </div>
 
+                                <div className="media">
+                                    <a target="_blank" href="https://www.youtube.com/@AdaTaxi">
+                                        <img src="./images/youtube.webp" alt="yotube" loading="lazy"/>
+                                    </a>
+                                    <div className="name">Youtube</div>
+                                </div>
+                            </div>
                             <div className="web-sayt">
-                                © 2024 ada.taxi.uz
+                                <a target="_blank" href="https://adataxi.uz/">
+                                    © 2024 adataxi.uz</a>
                             </div>
                         </div>
                     )}
@@ -675,30 +420,25 @@ const Modal = () => {
                                 <label className="label-payment">
                                     <div className="left">
                                         <img src="./images/card.webp" alt="card" loading="lazy"/>
-                                        <span>Naqt</span>
+                                        <span>{t("cash")}</span>
                                     </div>
-
-
                                     <input
                                         type="radio"
-                                        value="Naqt"
-                                        checked={PaymentType.payment_type === "Naqt"}
+                                        value="cash"
+                                        checked={PaymentType.payment_type === "cash"}
                                         onChange={(e) => changePaymentType(e.target.value)}
                                         className="w-4 h-4"
                                     />
                                 </label>
-
                                 <label className="label-payment">
                                     <div className="left">
                                         <img src="./images/card.webp" alt="card" loading="lazy"/>
-                                        <span>Karta</span>
+                                        <span>{t("card")}</span>
                                     </div>
-
-
                                     <input
                                         type="radio"
-                                        value="Karta"
-                                        checked={PaymentType.payment_type === "Karta"}
+                                        value="card"
+                                        checked={PaymentType.payment_type === "card"}
                                         onChange={(e) => changePaymentType(e.target.value)}
                                         className="w-4 h-4"
                                     />
@@ -709,9 +449,8 @@ const Modal = () => {
                             <div onClick={() => {
                                 dispatch(hideModal({show: false}))
                             }} className="send-btn">
-                                Tasdiqlash
+                                {t("success")}
                             </div>
-
                         </div>
                     )}
 
@@ -730,26 +469,23 @@ const Modal = () => {
                                         alt="cancel"/>
                                 </div>
                             </div>
-
                             <div className="form-box">
-                                <label htmlFor="phone">Telefon raqami</label>
+                                <label htmlFor="phone">{t("phone")}</label>
                                 <input value={other_clinet_phone}
                                        onChange={(e) => setOtherClinetPhone(e.target.value)}
                                        id="phone"
-                                       placeholder="Telefon raqam kirting..." type="number"/>
+                                       placeholder={t("phone_form")} type="number"/>
                             </div>
-
                             <div className="form-box">
-                                <label htmlFor="name">Ismi</label>
+                                <label htmlFor="name">{t("name")}</label>
                                 <input value={other_clinet_name} onChange={(e) => setOtherClinetName(e.target.value)}
-                                       id="name" placeholder="Ismini kirting..." type="text"/>
+                                       id="name" placeholder={t("name_add")} type="text"/>
                             </div>
-
                             <button
                                 onClick={addClient}
                                 disabled={!(other_clinet_phone.trim().length > 0 && other_clinet_name.trim().length > 0)}
                                 className={`send-btn ${!(other_clinet_phone.trim().length > 0 && other_clinet_name.trim().length > 0) ? "btn-disablet" : ""}`}>
-                                Tasdiqlash
+                                {t("success")}
                             </button>
                         </div>
                     )}
@@ -758,9 +494,8 @@ const Modal = () => {
                         <div className="cancel-order">
                             <div className="header">
                                 <h1 className="title">
-                                    Bekor qilish sababini tanlang
+                                    {t("reason_cancel")}
                                 </h1>
-
                                 <div className="cancel-btn">
                                     <img
                                         onClick={() => {
@@ -772,117 +507,37 @@ const Modal = () => {
                             </div>
 
                             <div className="radio-buttons">
-                                <label className="label-payment">
-                                    <span>Rejalarim o‘zgardi</span>
-                                    <input
-                                        type="radio"
-                                        value="1"
-                                        checked={reason === "1"}
-                                        onChange={(e) => setReason(e.target.value)}
-                                    />
-                                </label>
+                                {reasonList.map((item, index) => {
+                                    return <label key={item.id} className="label-payment">
+                                        <span>{item.translations[i18next.language].name}</span>
+                                        <input
+                                            type="radio"
+                                            value={item.id}
+                                            checked={reason === item.id}
+                                            onChange={() => {
+                                                setReason(item.id)
+                                            }}
+                                        />
+                                    </label>
+                                })}
 
-                                <label className="label-payment">
-                                    <span>Boshqa mashina topdim</span>
-                                    <input
-                                        type="radio"
-                                        value="2"
-                                        checked={reason === "2"}
-                                        onChange={(e) => setReason(e.target.value)}
-                                    />
-                                </label>
+                                {/*<label className="label-payment">*/}
+                                {/*    <div className="input-box">*/}
+                                {/*        <input onClick={() => setReason("6")}*/}
+                                {/*               placeholder="Bekor qilish sababini kiriting..." type="text"/>*/}
+                                {/*    </div>*/}
 
-                                <label className="label-payment">
-                                    <span>Chaqiruv nuqtasi noto‘g‘ri belgilandi</span>
-                                    <input
-                                        type="radio"
-                                        value="3"
-                                        checked={reason === "3"}
-                                        onChange={(e) => setReason(e.target.value)}
-                                    />
-                                </label>
-
-                                <label className="label-payment">
-                                    <span>Uzoq kutish kerak edi</span>
-                                    <input
-                                        type="radio"
-                                        value="4"
-                                        checked={reason === "4"}
-                                        onChange={(e) => setReason(e.target.value)}
-                                    />
-                                </label>
-
-                                <label className="label-payment">
-                                    <span>Haydovchi bekor qilishni so‘radi</span>
-                                    <input
-                                        type="radio"
-                                        value="5"
-                                        checked={reason === "5"}
-                                        onChange={(e) => setReason(e.target.value)}
-                                    />
-                                </label>
-
-                                <label className="label-payment">
-                                    <div className="input-box">
-                                        <input onClick={() => setReason("6")}
-                                               placeholder="Bekor qilish sababini kiriting..." type="text"/>
-                                    </div>
-
-                                    <input
-                                        type="radio"
-                                        value="6"
-                                        checked={reason === "6"}
-                                        onChange={(e) => setReason(e.target.value)}
-                                    />
-                                </label>
+                                {/*    <input*/}
+                                {/*        type="radio"*/}
+                                {/*        value="6"*/}
+                                {/*        checked={reason === "6"}*/}
+                                {/*        onChange={(e) => setReason(e.target.value)}*/}
+                                {/*    />*/}
+                                {/*</label>*/}
                             </div>
 
-                            <div className="send-btn">
-                                Tasdiqlash
-                            </div>
-
-                        </div>
-                    )}
-
-                    {modalContent.status === "add-location" && (
-                        <div className="add-location">
-                            <div className="header">
-                                <h1 className="title">
-                                    Manzilni tanlang
-                                </h1>
-                                <div className="cancel-btn">
-                                    <img
-                                        onClick={() => {
-                                            dispatch(hideModal({show: false}))
-                                        }}
-                                        src="./images/cancel.webp"
-                                        alt="cancel"/>
-                                </div>
-                            </div>
-
-                            <div className="map-box">
-                                <GoogleMap
-                                    zoom={10}
-                                    center={center}
-                                    options={options}
-                                    onClick={ClicklLocation}
-                                    mapContainerClassName="map"
-                                >
-                                    {selected && (
-                                        <Marker icon={selectAddressIcon} position={selected}/>
-                                    )}
-
-                                    <div className="search-address">
-                                        <div className="places-container">
-                                            <PlacesAutocomplete setSelected={setSelected}/>
-                                            <img src="./images/search.png" alt=""/>
-                                        </div>
-                                    </div>
-                                </GoogleMap>
-                            </div>
-
-                            <div onClick={getAddressLocation} className="send-btn">
-                                Tasdiqlash
+                            <div onClick={cencelOrder} className="send-btn">
+                                {t("success")}
                             </div>
                         </div>
                     )}

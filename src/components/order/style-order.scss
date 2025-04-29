@@ -992,6 +992,220 @@
     }
   }
 
+  .info-box-postal {
+    .header {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      padding: 16px 16px 16px 16px;
+      background-color: white;
+      position: sticky;
+      top: 0;
+
+      img {
+        width: 24px;
+        cursor: pointer;
+        margin-right: 24px;
+      }
+
+      .title {
+        color: rgba(20, 20, 20, 1);
+        font-size: 18px;
+        font-weight: 600;
+        line-height: 22px;
+      }
+    }
+
+    .info-postal {
+      margin-top: 5px;
+      padding: 10px 16px;
+      width: 100%;
+      background-color: white;
+
+      .title {
+        color: rgba(20, 20, 20, 1);
+        font-size: 20px;
+        font-weight: 700;
+
+      }
+
+      .person-info {
+        margin-top: 10px;
+        display: flex;
+        align-items: center;
+
+
+        &:nth-child(2) {
+          border-bottom: 1px solid rgba(162, 164, 166, 0.24);
+          padding-bottom: 10px;
+        }
+
+        .left-icon-person {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 24px;
+          height: 24px;
+          background-color: rgba(2, 145, 217, 1);
+          border-radius: 8px;
+          margin-right: 10px;
+
+          img {
+            width: 50%;
+          }
+        }
+
+        .left-icon-postal {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 24px;
+          height: 24px;
+          background-color: rgba(224, 50, 34, 1);
+          border-radius: 8px;
+          margin-right: 10px;
+
+          img {
+            width: 60%;
+          }
+        }
+
+        .left-icon-phone {
+          margin-right: 10px;
+
+          img {
+            width: 24px;
+          }
+        }
+
+        .right-info {
+          .title {
+            color: rgba(162, 164, 166, 1);
+            font-size: 13px;
+            font-weight: 400;
+          }
+
+          .bottom-info {
+            color: rgba(20, 20, 20, 1);
+            font-size: 15px;
+
+            input {
+              border: none;
+              color: rgba(20, 20, 20, 1);
+              font-size: 15px;
+
+              &:focus {
+                outline: none;
+                border-bottom: 1.5px solid rgba(45, 186, 108, 1);
+              }
+            }
+
+            input[type="number"]::-webkit-outer-spin-button,
+            input[type="number"]::-webkit-inner-spin-button {
+              -webkit-appearance: none;
+              margin: 0;
+            }
+
+            input[type="number"] {
+              -moz-appearance: textfield;
+            }
+          }
+        }
+      }
+    }
+
+    .order-info {
+      margin-top: 5px;
+
+      .title {
+        color: rgba(20, 20, 20, 1);
+        font-size: 18px;
+        font-weight: 600;
+        line-height: 22px;
+      }
+
+      padding: 10px 16px;
+      width: 100%;
+      background-color: white;
+
+      .payment-who {
+        border-top: 1px solid rgba(162, 164, 166, 0.24);
+        border-bottom: 1px solid rgba(162, 164, 166, 0.24);
+        margin-top: 12px;
+        padding-top: 12px;
+        padding-bottom: 12px;
+
+        .title {
+          color: rgba(162, 164, 166, 1);
+          font-size: 13px;
+          font-weight: 400;
+        }
+
+        .on-of {
+          margin-top: 6px;
+          display: flex;
+          align-items: center;
+          width: 100%;
+          height: 55px;
+          border-radius: 12px;
+          padding: 3px;
+          background-color: rgba(200, 204, 203, 0.18);
+
+          .on {
+            background-color: white;
+            color: rgba(38, 45, 51, 1);
+          }
+
+          .of {
+            cursor: pointer;
+            width: 50%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            color: rgba(133, 145, 158, 1);
+            transition: 0.3s;
+          }
+        }
+      }
+
+      .form-date {
+        width: 100%;
+        margin: 0 auto 0px auto;
+        height: 55px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        &:nth-child(2) {
+          border-bottom: 1px solid rgba(162, 164, 166, 0.24);
+        }
+
+        .label {
+          color: rgba(20, 20, 20, 1);
+          font-size: 15px;
+          line-height: 20px;
+        }
+
+        .input-time {
+          input {
+            border: none;
+            font-weight: 600;
+            color: rgba(20, 20, 20, 1);
+            font-size: 15px;
+            line-height: 20px;
+            letter-spacing: -1%;
+
+            &:focus {
+              outline: none;
+            }
+          }
+        }
+      }
+    }
+  }
+
   .button-box {
     width: 100%;
     margin-top: 6px;
@@ -1034,17 +1248,22 @@
       justify-content: center;
       color: rgba(20, 20, 20, 1);
       background-color: white;
+      span {
+        width: 20px;
+      }
     }
 
     .loading {
       width: 100%;
       height: 6px;
       background-color: white;
+      overflow: hidden;
 
       .loader {
         width: 30%;
         height: 100%;
         background-color: rgba(45, 186, 108, 1);
+        transition: width 1s linear;
       }
     }
 
@@ -1206,35 +1425,36 @@
     .buttons {
       margin-top: 6px;
       width: 100%;
-      height: 80px;
+      height: 70px;
       display: flex;
       align-items: center;
       background-color: white;
 
       .cancel-btn {
-        width: 50%;
+        width: 100%;
         height: 100%;
         display: flex;
         align-items: center;
         justify-content: center;
-        flex-direction: column;
         color: rgba(247, 39, 7, 1);
         cursor: pointer;
-        font-size: 13px;
+        font-size: 14px;
         font-weight: 500;
         line-height: 18px;
+        transition: 0.3s;
 
         &:hover {
           img {
             transform: scale(1.1);
           }
 
+          background: rgba(247, 39, 7, 0.06);
         }
 
         img {
           width: 24px;
-          margin-bottom: 6px;
           transition: 0.3s;
+          margin-right: 8px;
         }
       }
 
@@ -1316,7 +1536,6 @@
           .num {
             color: rgba(20, 20, 20, 1);
             font-size: 20px;
-            font-weight: 400;
             line-height: 28px;
             font-weight: 600;
           }
@@ -1437,7 +1656,6 @@
       .call-driver {
         width: max-content;
         padding: 12px 25px;
-        color: white;
         cursor: pointer;
         border-radius: 50px;
         background-color: rgba(45, 186, 108, 1);
@@ -1446,6 +1664,11 @@
         display: flex;
         align-items: center;
         transition: 0.3s;
+
+        a {
+          color: white;
+          text-decoration: none;
+        }
 
         img {
           width: 25px;
@@ -1629,40 +1852,36 @@
     .buttons {
       margin-top: 6px;
       width: 100%;
-      height: 80px;
+      height: 70px;
       display: flex;
       align-items: center;
       background-color: white;
-      position: sticky;
-      bottom: 0;
-      border-top-left-radius: 15px;
-      border-top-right-radius: 15px;
-      box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
 
       .cancel-btn {
-        width: 50%;
+        width: 100%;
         height: 100%;
         display: flex;
         align-items: center;
         justify-content: center;
-        flex-direction: column;
         color: rgba(247, 39, 7, 1);
         cursor: pointer;
-        font-size: 13px;
+        font-size: 14px;
         font-weight: 500;
         line-height: 18px;
+        transition: 0.3s;
 
         &:hover {
           img {
             transform: scale(1.1);
           }
 
+          background: rgba(247, 39, 7, 0.06);
         }
 
         img {
           width: 24px;
-          margin-bottom: 6px;
           transition: 0.3s;
+          margin-right: 8px;
         }
       }
 

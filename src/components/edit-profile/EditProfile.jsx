@@ -6,9 +6,11 @@ import {useDispatch, useSelector} from "react-redux";
 import {showModals} from "../../redux/ModalContent";
 import axios from "axios";
 import {addAlert, delAlert} from "../../redux/AlertsBox";
+import {useTranslation} from "react-i18next";
 
 
 const EditProfile = () => {
+    const {t} = useTranslation();
     const baseUrl = useSelector((store) => store.baseUrl.data)
     const navigate = useNavigate();
     const dispatch = useDispatch();
@@ -17,7 +19,6 @@ const EditProfile = () => {
     const [first_name, setFirstName] = useState("");
     const [last_name, setLastName] = useState("");
     const [gender, setGender] = useState("male");
-
     useEffect(() => {
         if (localStorage.getItem("token")) {
             axios.get(`${baseUrl}/api/v1/client/`, {
@@ -67,7 +68,7 @@ const EditProfile = () => {
             let idAlert = Date.now();
             let alert = {
                 id: idAlert,
-                text: "Ma'lumotlar saqlandi!",
+                text: t("save_info"),
                 img: "./images/green.svg",
                 color: "#FFFAEA",
             };
@@ -83,10 +84,8 @@ const EditProfile = () => {
             <div className="top-side">
                 <Header/>
             </div>
-
             <div className="bottom-side">
                 <div className="information-profile">
-
                     <div className="photo-client">
                         <img
                             src={imagePreview || "./images/camera.webp"}
@@ -94,46 +93,39 @@ const EditProfile = () => {
                             loading="lazy"
                         />
                     </div>
-
                     <div className="choose-img">
                         <div className="text">
-                            {profile_image ? "Tahrirlash" : "Rasm qo'shish"}
+                            {profile_image ? t("edit") : t("add_photo")}
                         </div>
                         <input onChange={handleFileChange} type="file"/>
                     </div>
-
                     <div className="input-box">
-                        <div className="label">Ismingiz</div>
+                        <div className="label">{t("first_name")}</div>
                         <input value={first_name} onChange={(e) => setFirstName(e.target.value)} type="text"/>
                     </div>
-
                     <div className="input-box">
-                        <div className="label">Familiyangiz</div>
+                        <div className="label">{t("last_name")}</div>
                         <input value={last_name} onChange={(e) => setLastName(e.target.value)} type="text"/>
                     </div>
-
-                    <div className="label">Jinsingiz</div>
+                    <div className="label">{t("gender")}</div>
                     <div className="on-of">
                         <div onClick={() => setGender("male")} className={`of ${gender === "male" ? "on" : ""}`}>
-                            Erkak
+                            {t("male")}
                         </div>
                         <div onClick={() => setGender("femele")}
                              className={`of ${gender === "femele" ? "on" : ""}`}>
-                            Ayol
+                            {t("female")}
                         </div>
                     </div>
-
                     <div className="buttons">
                         <div onClick={() => navigate("/profile")} className="cancel-btn">
-                            Bekor qilish
+                            {t("cancel_order")}
                         </div>
                         <div onClick={saveProfile} className="save-btn">
-                            O'zgarishlarni saqlash
+                            {t("save_information")}
                         </div>
                     </div>
                 </div>
-
-
             </div>
         </div>
     );

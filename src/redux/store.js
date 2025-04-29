@@ -6,6 +6,7 @@ import PickUpLocations  from "./PickUpLocations"
 import DropOffLocations  from "./DropOffLocations"
 import PaymentType  from "./PaymentType"
 import AddClient  from "./AddClient"
+import GetLocations  from "./GetLocations"
 
 export const store = configureStore({
     reducer: {
@@ -15,6 +16,7 @@ export const store = configureStore({
         PickUpLocations,
         DropOffLocations,
         PaymentType,
-        AddClient
+        AddClient,
+        GetLocations
     }
 })

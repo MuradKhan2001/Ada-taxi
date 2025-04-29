@@ -54,26 +54,29 @@ const Header = () => {
                     localStorage.removeItem("userId");
                     showModalContent("log-in")
                 }
-            });}
-
-
+            });
+        }
     }, []);
 
     return (
         <div className="header-wrapper">
             <img onClick={() => navigate("/")} className="logo" src="./images/logo.webp" alt="ada-taxi-logo"
                  loading="lazy"/>
-
             <div className="center-box">
                 <b onClick={() => {
                     showModalContent("orders")
                     navigate("/")
-                }}>Mening sahifalarim</b>
-                <b onClick={() => showModalContent("about-app")}>Qo‘llab-quvvatlash</b>
+                }}>
+                    {t("my_orders")}
+                </b>
+                <b onClick={() => showModalContent("about-app")}>
+                    {t("app_links")}
+                </b>
 
-                <b onClick={() => showModalContent("download-app")}>Ilovani yuklab olish</b>
+                <b onClick={() => showModalContent("download-app")}>
+                    {t("download_app")}
+                </b>
             </div>
-
             <div className="header-buttons">
                 <div className="language-btn">
                     <Dropdown>
@@ -99,15 +102,11 @@ const Header = () => {
                         </Dropdown.Menu>
                     </Dropdown>
                 </div>
-
-                {
-                    !localStorage.getItem("token") &&
+                {!localStorage.getItem("token") &&
                     <div onClick={() => showModalContent("log-in")} className="sign-in-btn">
                         <img src="./images/logout.webp" alt="sign-in" loading="lazy"/>
                         {t("login")}
-                    </div>
-                }
-
+                    </div>}
                 {localStorage.getItem("token") && <div className="profile-client">
                     <Dropdown>
                         <Dropdown.Toggle variant="success" id="dropdown-basic">
@@ -124,27 +123,24 @@ const Header = () => {
                                 <div className="phone">{client.phone}</div>
                             </div>
                         </Dropdown.Toggle>
-
                         <Dropdown.Menu>
                             <Dropdown.Item onClick={() => navigate("/profile")}>
                                 <img src="./images/setting.webp" alt="settings" loading="lazy"/>
-                                Profil sozlamalari
+                                {t("settings")}
                             </Dropdown.Item>
 
                             <Dropdown.Item onClick={() => showModalContent("about-app")}>
                                 <img src="./images/information.webp" alt="settings" loading="lazy"/>
-                                Dastur haqida
+                                {t("app_links")}
                             </Dropdown.Item>
 
                             <Dropdown.Item onClick={() => showModalContent("log-out")}>
                                 <img src="./images/log-out.webp" alt="settings" loading="lazy"/>
-                                Profildan chiqish
+                                {t("logOut")}
                             </Dropdown.Item>
                         </Dropdown.Menu>
                     </Dropdown>
                 </div>}
-
-
             </div>
         </div>
     );

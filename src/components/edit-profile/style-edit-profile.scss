@@ -134,7 +134,7 @@
         }
       }
 
-      .label{
+      .label {
         margin-top: 20px;
         font-size: 13px;
         font-weight: 400;
@@ -163,6 +163,7 @@
           border-radius: 10px;
           font-weight: 600;
           transition: 0.3s;
+
           &:hover {
             background-color: rgba(174, 177, 175, 0.18);
           }
@@ -181,6 +182,7 @@
           border-radius: 10px;
           font-weight: 500;
           transition: 0.3s;
+
           &:hover {
             background-color: rgb(41, 170, 99);
           }
