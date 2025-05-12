@@ -55,13 +55,15 @@ const Modal = () => {
     }, [checkCode ? seconds : null]);
 
     useEffect(() => {
-        axios.get(`${baseUrl}/api/v1/reject-reason/client/`, {
-            headers: {
-                "Authorization": `Token ${localStorage.getItem("token")}`
-            }
-        }).then((response) => {
-            setReasonList(response.data);
-        })
+        if (localStorage.getItem("token")) {
+            axios.get(`${baseUrl}/api/v1/reject-reason/client/`, {
+                headers: {
+                    "Authorization": `Token ${localStorage.getItem("token")}`
+                }
+            }).then((response) => {
+                setReasonList(response.data);
+            })
+        }
     }, []);
 
     const logOut = () => {
@@ -371,7 +373,7 @@ const Modal = () => {
                                             <img src="./images/sms.webp" alt="phone" loading="lazy"/>
                                         </div>
                                         <div className="name">
-                                            Mutxasisga yozish
+                                            {t("send-message")}
                                         </div>
                                     </div>
                                     <div className="icon-more">
@@ -458,7 +460,7 @@ const Modal = () => {
                         <div className="add-other">
                             <div className="header">
                                 <h1 className="title">
-                                    Kim uchun buyurtma beramiz?
+                                    {t("other-order")}
                                 </h1>
                                 <div className="cancel-btn">
                                     <img

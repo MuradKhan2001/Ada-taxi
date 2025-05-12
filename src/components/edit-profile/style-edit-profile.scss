@@ -34,9 +34,11 @@
         align-items: center;
         justify-content: center;
         background-color: rgba(200, 204, 203, 0.18);
+        overflow: hidden;
+        border: 1px solid rgba(198, 198, 198, 0.1);
 
         img {
-          width: 50%
+          width: 100%
         }
 
       }

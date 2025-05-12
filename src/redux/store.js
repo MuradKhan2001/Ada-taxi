@@ -1,12 +1,16 @@
 import {configureStore} from "@reduxjs/toolkit"
 import baseUrl from "./BaseUrl";
-import Alerts from  "./AlertsBox";
-import ModalContent  from  "./ModalContent"
-import PickUpLocations  from "./PickUpLocations"
-import DropOffLocations  from "./DropOffLocations"
-import PaymentType  from "./PaymentType"
-import AddClient  from "./AddClient"
-import GetLocations  from "./GetLocations"
+import Alerts from "./AlertsBox";
+import ModalContent from "./ModalContent"
+import PickUpLocations from "./PickUpLocations"
+import DropOffLocations from "./DropOffLocations"
+import PaymentType from "./PaymentType"
+import AddClient from "./AddClient"
+import GetLocations from "./GetLocations"
+import DriverLocation from "./DriverLocation"
+import ActiveOrders from "./ActiveOrders"
+import OrderPage from "./OrderPage"
+
 
 export const store = configureStore({
     reducer: {
@@ -17,6 +21,9 @@ export const store = configureStore({
         DropOffLocations,
         PaymentType,
         AddClient,
-        GetLocations
+        GetLocations,
+        DriverLocation,
+        ActiveOrders,
+        OrderPage
     }
 })

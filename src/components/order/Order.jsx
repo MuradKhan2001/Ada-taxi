@@ -1,23 +1,27 @@
-import React, {useEffect, useState, useContext} from 'react';
+import React, {useEffect, useState} from 'react';
 import "./style-order.scss";
 import ReactStars from "react-stars";
-import {hideModal, showModals} from "../../redux/ModalContent";
+import {showModals} from "../../redux/ModalContent";
 import {useDispatch, useSelector} from "react-redux";
 import {useNavigate} from "react-router-dom";
 import {useTranslation} from "react-i18next";
 import {addLocations, delLocations, clearPickUpLocations} from "../../redux/PickUpLocations";
 import {addLocationsDrop, delLocationsDrop, clearDropOffLocations} from "../../redux/DropOffLocations";
 import {AddClientInfo} from "../../redux/AddClient";
-import {webSockedContext} from "../app/App";
 import axios from "axios";
 import i18next from "i18next";
 import {ShowHideModal} from "../../redux/GetLocations";
+import {getOrder} from "../../redux/ActiveOrders";
+import {setPageNumber} from "../../redux/OrderPage";
 import {addAlert, delAlert} from "../../redux/AlertsBox";
+import success from "../app/sound/success.wav";
+import success2 from "../app/sound/success2.wav";
 
 const Order = () => {
-    let webSocked = useContext(webSockedContext);
-    const baseUrl = useSelector((store) => store.baseUrl.data)
     const {t} = useTranslation();
+    const baseUrl = useSelector((store) => store.baseUrl.data)
+    const orderPage = useSelector((store) => store.OrderPage.data)
+    const active_order = useSelector((store) => store.ActiveOrders.data)
     const [progress, setProgress] = useState(0);
     const navigate = useNavigate();
     const dispatch = useDispatch();
@@ -26,8 +30,8 @@ const Order = () => {
     const PaymentType = useSelector((store) => store.PaymentType.data)
     const OtherClients = useSelector((store) => store.AddClient.data)
     const [client_count, setClient_count] = useState(1);
-    const [raidCount, setRaidCount] = useState();
-    const [orderPage, setOrderPage] = useState(0);
+    const [raidCount, setRaidCount] = useState(0);
+    const [showRete, setShowRete] = useState(true);
     const [dots, setDots] = useState("");
 
     const direction = [
@@ -55,10 +59,9 @@ const Order = () => {
     const [receiver_phone, setReceiverPhone] = useState("");
     const [payer, setPayer] = useState("sender");
 
-    const [active_order, setActive_Order] = useState([]);
-
     useEffect(() => {
         if (localStorage.getItem("token")) {
+
             axios.get(`${baseUrl}/api/v1/extra-services/`, {
                 headers: {
                     "Authorization": `Token ${localStorage.getItem("token")}`
@@ -76,93 +79,6 @@ const Order = () => {
     }, [PickUpLocations, DropOffLocations, active_service, all_seats, client_count, active_direction]);
 
     useEffect(() => {
-        webSocked.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-
-            if (data.action === "reject_order") {
-                setOrderPage(0)
-                let idAlert = Date.now();
-                let alert = {
-                    id: idAlert, text: t("alert_cancel"), img: "./images/green.svg", color: "#EDFFFA"
-                };
-                dispatch(addAlert(alert));
-                setTimeout(() => {
-                    dispatch(delAlert(idAlert));
-                }, 5000);
-                dispatch(hideModal({show: false}))
-            }
-
-            if (data.action === "order_started") {
-                let idAlert = Date.now();
-                let alert = {
-                    id: idAlert, text: t("order_started"), img: "./images/green.svg", color: "#EDFFFA"
-                };
-                dispatch(addAlert(alert));
-                setTimeout(() => {
-                    dispatch(delAlert(idAlert));
-                }, 5000);
-            }
-
-            if (data.action === "arrived") {
-                let idAlert = Date.now();
-                let alert = {
-                    id: idAlert, text: t("arrived"), img: "./images/green.svg", color: "#EDFFFA"
-                };
-                dispatch(addAlert(alert));
-                setTimeout(() => {
-                    dispatch(delAlert(idAlert));
-                }, 5000);
-            }
-
-            if (data.action === "trip_started") {
-                let idAlert = Date.now();
-                let alert = {
-                    id: idAlert, text: t("trip_started"), img: "./images/green.svg", color: "#EDFFFA"
-                };
-                dispatch(addAlert(alert));
-                setTimeout(() => {
-                    dispatch(delAlert(idAlert));
-                }, 5000);
-            }
-
-            if (data.action === "order_finished") {
-                let idAlert = Date.now();
-                let alert = {
-                    id: idAlert, text: t("order_finished"), img: "./images/green.svg", color: "#EDFFFA"
-                };
-                dispatch(addAlert(alert));
-                setTimeout(() => {
-                    dispatch(delAlert(idAlert));
-                }, 5000);
-            }
-
-            if (data.action === "driver_location") {
-                let idAlert = Date.now();
-                let alert = {
-                    id: idAlert, text: t("driver_location"), img: "./images/green.svg", color: "#EDFFFA"
-                };
-                dispatch(addAlert(alert));
-                setTimeout(() => {
-                    dispatch(delAlert(idAlert));
-                }, 5000);
-            }
-        };
-    }, [webSocked])
-
-    useEffect(() => {
-        const totalDuration = 3 * 60 * 1000;
-        const interval = 1000;
-        const step = (100 / (totalDuration / interval));
-        const timer = setInterval(() => {
-            setProgress((prev) => {
-                if (prev + step >= 100) return 0;
-                return prev + step;
-            });
-        }, interval);
-        return () => clearInterval(timer);
-    }, []);
-
-    useEffect(() => {
         const interval = setInterval(() => {
             setDots((prev) => (prev.length < 3 ? prev + "." : ""));
         }, 500);
@@ -170,20 +86,38 @@ const Order = () => {
         return () => clearInterval(interval);
     }, []);
 
-    const getActiveOrders = () => {
-        axios.get(`${baseUrl}/api/v1/client-active-orders/`, {
-            headers: {
-                "Authorization": `Token ${localStorage.getItem("token")}`
-            }
-        }).then((response) => {
-            setActive_Order(response.data[0]);
-            if (response.data.length > 0) {
-                if (response.data[0].driver) {
-                    setOrderPage(4)
-                } else setOrderPage(3)
+    function successAudio() {
+        new Audio(success).play()
+    }
 
-            }
-        })
+    function successOrder() {
+        new Audio(success2).play()
+    }
+
+    const getActiveOrders = () => {
+        if (localStorage.getItem("token")) {
+            axios.get(`${baseUrl}/api/v1/client-active-orders/`, {
+                headers: {
+                    "Authorization": `Token ${localStorage.getItem("token")}`
+                }
+            }).then((response) => {
+                dispatch(getOrder(response.data[0]));
+                if (response.data.length > 0) {
+                    if (response.data[0].driver) {
+                        if (response.data[0].status === "started") {
+                            dispatch(setPageNumber(5))
+
+                            if (response.data[0].rated) {
+                                setShowRete(false);
+                            }
+                        } else dispatch(setPageNumber(4))
+                    } else {
+                        dispatch(setPageNumber(3))
+                        loader()
+                    }
+                }
+            })
+        }
     }
 
     const showModalContent = (status, id) => {
@@ -305,7 +239,7 @@ const Order = () => {
                     "Authorization": `Token ${localStorage.getItem("token")}`
                 }
             }).then((response) => {
-                setActive_Order([response.data])
+                dispatch(getOrder([response.data]))
                 getActiveOrders()
                 let idAlert = Date.now();
                 let alert = {
@@ -317,6 +251,8 @@ const Order = () => {
                 }, 5000);
                 dispatch(clearPickUpLocations())
                 dispatch(clearDropOffLocations())
+                loader()
+                successOrder()
             })
         } else {
             let idAlertError = Date.now();
@@ -333,6 +269,43 @@ const Order = () => {
         }
 
     };
+
+    const loader = () => {
+        const totalDuration = 3 * 60 * 1000;
+        const interval = 1000;
+        const step = (100 / (totalDuration / interval));
+        const timer = setInterval(() => {
+            setProgress((prev) => {
+                if (prev + step >= 100) return 0;
+                return prev + step;
+            });
+        }, interval);
+        return () => clearInterval(timer);
+    }
+
+    const rateDriver = () => {
+        let data = {
+            order: active_order.id,
+            rate: raidCount
+        }
+        if (showRete) {
+            axios.post(`${baseUrl}/api/v1/order-review/`, data, {
+                headers: {
+                    "Authorization": `Token ${localStorage.getItem("token")}`
+                }
+            }).then((response) => {
+                let idAlert = Date.now();
+                let alert = {
+                    id: idAlert, text: t("driver_rate"), img: "./images/green.svg", color: "#EDFFFA"
+                };
+                dispatch(addAlert(alert));
+                setTimeout(() => {
+                    dispatch(delAlert(idAlert));
+                }, 5000);
+                successAudio()
+            })
+        }
+    }
 
     return (
         <div className="order-wrapper">
@@ -433,7 +406,7 @@ const Order = () => {
                         {t("payment_type")}
                     </div>
                     <div className="right">
-                        {PaymentType.payment_type}
+                        {PaymentType.payment_type === "cash" ? t("cash") : t("card")}
                         <img src="./images/more.webp" alt="more" loading="lazy"/>
                     </div>
                 </div>
@@ -485,25 +458,26 @@ const Order = () => {
                         }
                     })}
 
-                    {active_direction !== "postal" && <div onClick={() => setOrderPage(1)} className="service cursor">
-                        <div className="left">
-                            <img src="./images/filter.webp" alt="sms" loading="lazy"/>
-                            {t("plus_service")}
-                        </div>
-                        <img src="./images/more.webp" alt="more" loading="lazy"/>
-                    </div>}
+                    {active_direction !== "postal" &&
+                        <div onClick={() => dispatch(setPageNumber(1))} className="service cursor">
+                            <div className="left">
+                                <img src="./images/filter.webp" alt="sms" loading="lazy"/>
+                                {t("plus_service")}
+                            </div>
+                            <img src="./images/more.webp" alt="more" loading="lazy"/>
+                        </div>}
                 </div>
             </div>}
             {orderPage === 0 && <div onClick={() => {
                 if (PickUpLocations[0].latitude !== null && DropOffLocations[0].latitude !== null && active_price) {
                     if (active_direction !== "postal") {
-                        setOrderPage(6)
-                    } else setOrderPage(7)
+                        dispatch(setPageNumber(6))
+                    } else dispatch(setPageNumber(7))
                 } else {
                     let idAlertError = Date.now();
                     let alert = {
                         id: idAlertError,
-                        text: "Tarif va manzillarni kiriting!",
+                        text: t("tariff_location"),
                         img: "./images/red.svg",
                         color: "#FFEDF1",
                     };
@@ -520,7 +494,7 @@ const Order = () => {
 
             {orderPage === 1 && <div className="services-box">
                 <div className="header">
-                    <img onClick={() => setOrderPage(0)} src="./images/prev.png" alt="prev" loading="lazy"/>
+                    <img onClick={() => dispatch(setPageNumber(0))} src="./images/prev.png" alt="prev" loading="lazy"/>
                     <div className="title">
                         {t("plus_service")}
                     </div>
@@ -607,7 +581,7 @@ const Order = () => {
                             {t("payment_type")}
                         </div>
                         <div className="val">
-                            {active_order.payment_type}
+                            {active_order.payment_type === "cash" ? t("cash") : t("card")}
                         </div>
                     </div>
                     <div className="information">
@@ -866,29 +840,33 @@ const Order = () => {
                         </div>
                     </div>
                 </div>
-                <div className="rate-stars">
+                {showRete && <div className="rate-stars">
+
                     <ReactStars
                         count={5}
                         onChange={(e) => {
                             setRaidCount(e);
+                            rateDriver()
                         }}
+                        value={raidCount}
                         size={35}
                         color2={"rgba(250, 190, 25, 1)"}
                         half={false}
                     />
-                </div>
-                <div className="reason-box">
-                    <div className="title">Qanday muammo yuz berdi ?</div>
-                    <div className="reasons">
-                        <div className="reason">
-                            Haydovchi kech keldi
-                        </div>
-                        <div className="reason">Noto‘g‘ri manzilga bordi</div>
-                        <div className="reason">Yo‘l davomida haydovchi muloqoti yoqimsiz bo‘ldi</div>
-                        <div className="reason">Avtomobil toza emasdi</div>
-                        <div className="reason">Xavfsiz harakat qilmadi</div>
-                    </div>
-                </div>
+                </div>}
+
+                {/*<div className="reason-box">*/}
+                {/*    <div className="title">Qanday muammo yuz berdi ?</div>*/}
+                {/*    <div className="reasons">*/}
+                {/*        <div className="reason">*/}
+                {/*            Haydovchi kech keldi*/}
+                {/*        </div>*/}
+                {/*        <div className="reason">Noto‘g‘ri manzilga bordi</div>*/}
+                {/*        <div className="reason">Yo‘l davomida haydovchi muloqoti yoqimsiz bo‘ldi</div>*/}
+                {/*        <div className="reason">Avtomobil toza emasdi</div>*/}
+                {/*        <div className="reason">Xavfsiz harakat qilmadi</div>*/}
+                {/*    </div>*/}
+                {/*</div>*/}
                 <div className="location-box">
                     <div className="location-from">
                         <div className="location-text">
@@ -942,7 +920,7 @@ const Order = () => {
                             {t("payment_type")}
                         </div>
                         <div className="val">
-                            {active_order.payment_type}
+                            {active_order.payment_type === "cash" ? t("cash") : t("card")}
                         </div>
                     </div>
                     <div className="information">
@@ -985,7 +963,7 @@ const Order = () => {
 
             {orderPage === 6 && <div className="info-box">
                 <div className="header">
-                    <img onClick={() => setOrderPage(0)} src="./images/prev.png" alt="prev" loading="lazy"/>
+                    <img onClick={() => dispatch(setPageNumber(0))} src="./images/prev.png" alt="prev" loading="lazy"/>
                     <div className="title">
                         {t("plus_info")}
                     </div>
@@ -1065,7 +1043,7 @@ const Order = () => {
 
             {orderPage === 7 && <div className="info-box-postal">
                 <div className="header">
-                    <img onClick={() => setOrderPage(0)} src="./images/prev.png" alt="prev" loading="lazy"/>
+                    <img onClick={() => dispatch(setPageNumber(0))} src="./images/prev.png" alt="prev" loading="lazy"/>
                     <div className="title">
                         {t("plus_info")}
                     </div>

@@ -6,11 +6,11 @@
   "errorLocations1": "Iltimos olib ketish manzilini kiriting !!!",
   "net": "Internet past",
   "alert_cancel": "Buyurtma bekor qilindi!",
-  "order_finished": "Buyurtma yakunlandi!",
+  "order_finished": "Manzilga yetib keldik!",
   "driver_location": "Haydovchi yo'lga chiqdi!",
-  "trip_started": "Sayohat boshlandi",
-  "arrived": "Yetib keldi!",
-  "order_started": "Buyurtma boshlandi!",
+  "trip_started": "Sayohat boshlandi!",
+  "arrived": "Haydovchi yetib keldi!",
+  "order_started": "Haydovchi yo'lga chiqdi!",
   "confirm": "Buyurtma qabul qilindi !",
   "direction1": "Taksi",
   "direction2": "Po'chta",
@@ -90,5 +90,10 @@
   "name": "Ismi",
   "name_add": "Ismini kirting...",
   "reason_cancel": "Bekor qilish sababini tanlang",
-  "my_phone": "Telefon raqam"
+  "my_phone": "Telefon raqam",
+  "order_accepted": "Haydovchi buyurtmani qabul qildi!",
+  "tariff_location": "Tarif va manzillarni kiriting!",
+  "other-order": "Kim uchun buyurtma beramiz?",
+  "send-message": "Mutxasisga yozish",
+  "driver_rate": "Haydovchi baxolandi!"
 }

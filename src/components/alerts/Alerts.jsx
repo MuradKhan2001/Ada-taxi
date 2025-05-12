@@ -14,8 +14,11 @@ const Alerts = () => {
         {
             Alerts.length > 0 && <div className={`alerts-box ${Alerts.length > 3 ? "alerts-box-hide" : ""}`}>
                 {Alerts.map((item, index) => {
-                    return <div key={index} className="alert">
-                        <div style={{background:item.color}} className="left-side">
+                    return <div style={{
+                        borderTop: `4px solid ${item.color === "#EDFFFA" ? "#5b9f68": "#dd495f"}`,
+                        background:item.color
+                    }} key={index} className="alert">
+                        <div className="left-side">
                             <img src={item.img} alt=""/>
                         </div>
                         <div className="right-side">

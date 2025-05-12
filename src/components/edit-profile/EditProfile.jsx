@@ -29,7 +29,7 @@ const EditProfile = () => {
                 setFirstName(response.data.first_name);
                 setLastName(response.data.last_name);
                 setGender(response.data.gender);
-                setProfileImage(response.data.profile_image);
+                setImagePreview(response.data.profile_image);
             }).catch((error) => {
                 if (error.response.status == 401) {
                     localStorage.removeItem("token");
@@ -56,11 +56,19 @@ const EditProfile = () => {
         let data = {
             first_name,
             last_name,
-            gender,
-            profile_image
+            gender
         }
 
-        axios.post(`${baseUrl}/api/v1/client/`, data, {
+        let formData = new FormData();
+        for (let key in data) {
+            formData.append(key, data[key]);
+        }
+
+        if (profile_image) {
+            formData.append("profile_image", profile_image);
+        }
+
+        axios.post(`${baseUrl}/api/v1/client/`, formData, {
             headers: {
                 "Authorization": `Token ${localStorage.getItem("token")}`
             }
@@ -77,6 +85,8 @@ const EditProfile = () => {
                 dispatch(delAlert(idAlert));
             }, 5000);
         })
+
+
     }
 
     return (
@@ -112,8 +122,8 @@ const EditProfile = () => {
                         <div onClick={() => setGender("male")} className={`of ${gender === "male" ? "on" : ""}`}>
                             {t("male")}
                         </div>
-                        <div onClick={() => setGender("femele")}
-                             className={`of ${gender === "femele" ? "on" : ""}`}>
+                        <div onClick={() => setGender("female")}
+                             className={`of ${gender === "female" ? "on" : ""}`}>
                             {t("female")}
                         </div>
                     </div>

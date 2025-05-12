@@ -21,6 +21,7 @@ const libraries = ["places"];
 const Dashboard = () => {
     const {t} = useTranslation();
     const baseUrl = useSelector((store) => store.baseUrl.data)
+    const DriverLocation = useSelector((store) => store.DriverLocation.data)
     const [invalidService, setInvalidService] = useState("finished");
     const [showModal, setShowModal] = useState(false);
     const [center, setCenter] = useState();
@@ -33,6 +34,11 @@ const Dashboard = () => {
     const selectAddressIcon = {
         url: "./images/address.png",
         scaledSize: {width: 40, height: 50},
+    };
+
+    const driverIcon = {
+        url: "./images/driver-icon.png",
+        scaledSize: {width: 60, height: 60},
     };
 
     useEffect(() => {
@@ -56,6 +62,7 @@ const Dashboard = () => {
                 showModalContent("log-in")
             }
         });
+
     }, []);
 
     const {isLoaded} = useLoadScript({
@@ -104,64 +111,62 @@ const Dashboard = () => {
                                         />
                                     </div>
                                 </div>
-                                <div className="on-of">
-                                    <div onClick={() => setInvalidService("finished")}
-                                         className={`of ${invalidService === "finished" ? "on" : ""}`}>
-                                        {t("finished_order")}
-                                    </div>
-                                    <div onClick={() => setInvalidService("rejected")}
-                                         className={`of ${invalidService === "rejected" ? "on" : ""}`}>
-                                        {t("concelled_order")}
-                                    </div>
-                                </div>
+                                {/*<div className="on-of">*/}
+                                {/*    <div onClick={() => setInvalidService("finished")}*/}
+                                {/*         className={`of ${invalidService === "finished" ? "on" : ""}`}>*/}
+                                {/*        {t("finished_order")}*/}
+                                {/*    </div>*/}
+                                {/*    <div onClick={() => setInvalidService("rejected")}*/}
+                                {/*         className={`of ${invalidService === "rejected" ? "on" : ""}`}>*/}
+                                {/*        {t("concelled_order")}*/}
+                                {/*    </div>*/}
+                                {/*</div>*/}
                             </div>
                             <div className="orders-list">
                                 {history.map((item, index) => {
-                                    if (item.status === invalidService) {
-                                        return <div key={index} className="order">
-                                            <div className="date-order">{item.created_at.split(" ")[0]}</div>
-                                            <div onClick={() => {
-                                                setShowModal(true)
-                                                setOrder_info(item);
-                                            }} className="order-info">
-                                                {item.pick_up_locations.map((item_loc, index_loc) => {
-                                                    return <div key={index_loc} className="location-from">
-                                                        <div className="circle-warpper">
-                                                            <div className="circle"></div>
-                                                        </div>
-                                                        <div className="location-text">
-                                                            {item_loc.address}
-                                                        </div>
+                                    return <div key={index} className="order">
+                                        <div className="date-order">{item.created_at.split(" ")[0]}</div>
+                                        <div onClick={() => {
+                                            setShowModal(true)
+                                            setOrder_info(item);
+                                        }} className="order-info">
+                                            {item.pick_up_locations.map((item_loc, index_loc) => {
+                                                return <div key={index_loc} className="location-from">
+                                                    <div className="circle-warpper">
+                                                        <div className="circle"></div>
                                                     </div>
-                                                })}
-                                                <div className="line"></div>
-                                                {item.drop_off_locations.map((item_loc, index_loc) => {
-                                                    return <div key={index_loc} className="location-to">
-                                                        <div className="circle-warpper">
-                                                            <div className="circle"></div>
-                                                        </div>
-                                                        <div className="location-text">
-                                                            {item_loc.address}
-                                                        </div>
+                                                    <div className="location-text">
+                                                        {item_loc.address}
                                                     </div>
-                                                })}
-                                                <div className="bottom-info">
-                                                    <div className="left-info">
-                                                        <div className="text">
-                                                            {item.created_at.split(" ")[1].slice(0, 5)}
-                                                        </div>
-                                                        <div className="dot"></div>
-                                                        <div className="text">
-                                                            {item.car_category.translations[i18next.language].name}
-                                                        </div>
+                                                </div>
+                                            })}
+                                            <div className="line"></div>
+                                            {item.drop_off_locations.map((item_loc, index_loc) => {
+                                                return <div key={index_loc} className="location-to">
+                                                    <div className="circle-warpper">
+                                                        <div className="circle"></div>
                                                     </div>
-                                                    <div className="price">
-                                                        {item.price} {t("sum")}
+                                                    <div className="location-text">
+                                                        {item_loc.address}
                                                     </div>
+                                                </div>
+                                            })}
+                                            <div className="bottom-info">
+                                                <div className="left-info">
+                                                    <div className="text">
+                                                        {item.created_at.split(" ")[1].slice(0, 5)}
+                                                    </div>
+                                                    <div className="dot"></div>
+                                                    <div className="text">
+                                                        {item.car_category.translations[i18next.language].name}
+                                                    </div>
+                                                </div>
+                                                <div className="price">
+                                                    {item.price} {t("sum")}
                                                 </div>
                                             </div>
                                         </div>
-                                    }
+                                    </div>
                                 })}
                             </div>
                         </div>
@@ -315,7 +320,7 @@ const Dashboard = () => {
 
                 <div className="bottom-side">
                     <GoogleMap
-                        zoom={13}
+                        zoom={11}
                         center={center}
                         options={options}
                         mapContainerClassName="map"
@@ -325,6 +330,14 @@ const Dashboard = () => {
                                 position={center}
                                 icon={selectAddressIcon}
                             />)}
+
+
+                        {DriverLocation.latitude && DriverLocation.longitude && (
+                            <MarkerF
+                                position={{lat: DriverLocation.latitude, lng: DriverLocation.longitude}}
+                                icon={driverIcon}
+                            />)}
+
                     </GoogleMap>
                     <Order/>
                     <div className="app-box">
@@ -362,7 +375,6 @@ const Dashboard = () => {
                     </div>
                 </div>
             </div>
-
             <div className="mobil-device">
                 <div className="logo">
                     <img src="./images/logo3.webp" alt="logo"/>
