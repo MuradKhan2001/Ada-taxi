@@ -92,5 +92,8 @@
   "reason_cancel": "Select cancellation reason",
   "my_phone": "Phone number",
   "order_accepted": "The driver has accepted the order!",
-  "tariff_location": "Enter tariff and locations!"
+  "tariff_location": "Enter tariff and locations!",
+  "other-order": "Who are we ordering for?",
+  "send-message": "Write to a specialist",
+  "driver_rate": "Driver rated!"
 }
