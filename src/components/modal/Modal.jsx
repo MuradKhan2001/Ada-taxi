@@ -421,7 +421,7 @@ const Modal = () => {
                             <div className="radio-buttons">
                                 <label className="label-payment">
                                     <div className="left">
-                                        <img src="./images/card.webp" alt="card" loading="lazy"/>
+                                        <img src="./images/cash.png" alt="card" loading="lazy"/>
                                         <span>{t("cash")}</span>
                                     </div>
                                     <input

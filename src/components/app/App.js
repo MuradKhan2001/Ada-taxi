@@ -11,6 +11,9 @@ import {addAlert, delAlert} from "../../redux/AlertsBox";
 import {useTranslation} from "react-i18next";
 import {changeLocation} from "../../redux/DriverLocation";
 import {setPageNumber} from "../../redux/OrderPage";
+import {AddClientInfo} from "../../redux/AddClient";
+import {clearDropOffLocations} from "../../redux/DropOffLocations";
+import {clearPickUpLocations} from "../../redux/PickUpLocations";
 import {hideModal} from "../../redux/ModalContent";
 import axios from "axios";
 import {getOrder} from "../../redux/ActiveOrders";
@@ -125,7 +128,13 @@ const App = () => {
                     }
 
                     if (data.action === "order_finished") {
+
                         dispatch(setPageNumber(0))
+                        dispatch(changeLocation({}))
+                        dispatch(AddClientInfo({name: "", phone: "",}))
+                        dispatch(clearDropOffLocations())
+                        dispatch(clearPickUpLocations())
+
                         dispatch(changeLocation({}))
                         let idAlert = Date.now();
                         let alert = {
@@ -139,7 +148,7 @@ const App = () => {
                     }
 
                     if (data.action === "reject_order") {
-                        dispatch(setPageNumber(0))
+
                         let idAlert = Date.now();
                         let alert = {
                             id: idAlert, text: t("alert_cancel"), img: "./images/green.svg", color: "#EDFFFA"
@@ -148,7 +157,13 @@ const App = () => {
                         setTimeout(() => {
                             dispatch(delAlert(idAlert));
                         }, 5000);
+
                         dispatch(hideModal({show: false}))
+                        dispatch(setPageNumber(0))
+                        dispatch(changeLocation({}))
+                        dispatch(AddClientInfo({name: "", phone: "",}))
+                        dispatch(clearDropOffLocations())
+                        dispatch(clearPickUpLocations())
                         successAudio()
                     }
 

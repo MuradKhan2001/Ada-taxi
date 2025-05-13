@@ -1,14 +1,14 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useContext} from 'react';
 import "./style-order.scss";
 import ReactStars from "react-stars";
 import {showModals} from "../../redux/ModalContent";
 import {useDispatch, useSelector} from "react-redux";
-import {useNavigate} from "react-router-dom";
 import {useTranslation} from "react-i18next";
 import {addLocations, delLocations, clearPickUpLocations} from "../../redux/PickUpLocations";
 import {addLocationsDrop, delLocationsDrop, clearDropOffLocations} from "../../redux/DropOffLocations";
 import {AddClientInfo} from "../../redux/AddClient";
 import axios from "axios";
+import {webSockedContext} from "../app/App";
 import i18next from "i18next";
 import {ShowHideModal} from "../../redux/GetLocations";
 import {getOrder} from "../../redux/ActiveOrders";
@@ -18,12 +18,12 @@ import success from "../app/sound/success.wav";
 import success2 from "../app/sound/success2.wav";
 
 const Order = () => {
+    let webSocked = useContext(webSockedContext);
     const {t} = useTranslation();
     const baseUrl = useSelector((store) => store.baseUrl.data)
     const orderPage = useSelector((store) => store.OrderPage.data)
     const active_order = useSelector((store) => store.ActiveOrders.data)
     const [progress, setProgress] = useState(0);
-    const navigate = useNavigate();
     const dispatch = useDispatch();
     const PickUpLocations = useSelector((store) => store.PickUpLocations.data)
     const DropOffLocations = useSelector((store) => store.DropOffLocations.data)
@@ -85,6 +85,40 @@ const Order = () => {
 
         return () => clearInterval(interval);
     }, []);
+
+    useEffect(() => {
+        if (localStorage.getItem("token")) {
+            webSocked.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+
+                if (data.action) {
+                    if (data.action === "order_finished") {
+                        setComment_driver("")
+                        setPick_up_date("")
+                        setPick_up_time("")
+                        setAllSeats(false)
+                        setsender_phone("")
+                        setReceiverPhone("")
+                        setPayer("sender")
+                        setActive_service([])
+                        setRaidCount(0)
+                    }
+
+                    if (data.action === "reject_order") {
+                        setComment_driver("")
+                        setPick_up_date("")
+                        setPick_up_time("")
+                        setAllSeats(false)
+                        setsender_phone("")
+                        setReceiverPhone("")
+                        setPayer("sender")
+                        setActive_service([])
+                        setRaidCount(0)
+                    }
+                }
+            };
+        }
+    }, [webSocked])
 
     function successAudio() {
         new Audio(success).play()

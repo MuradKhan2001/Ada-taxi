@@ -14,15 +14,17 @@ import {CSSTransition} from "react-transition-group";
 import {hideModal, showModals} from "../../redux/ModalContent";
 import {useDispatch, useSelector} from "react-redux";
 import axios from "axios";
+import {useMediaQuery} from "@mui/material";
 import {useTranslation} from "react-i18next";
 
 const libraries = ["places"];
 
 const Dashboard = () => {
+    const isMobile = useMediaQuery("(max-width: 1024px)");
     const {t} = useTranslation();
     const baseUrl = useSelector((store) => store.baseUrl.data)
     const DriverLocation = useSelector((store) => store.DriverLocation.data)
-    const [invalidService, setInvalidService] = useState("finished");
+    // const [invalidService, setInvalidService] = useState("finished");
     const [showModal, setShowModal] = useState(false);
     const [center, setCenter] = useState();
     const dispatch = useDispatch();
@@ -56,7 +58,7 @@ const Dashboard = () => {
         ).then((response) => {
             setHistory(response.data);
         }).catch((error) => {
-            if (error.response.status == 401) {
+            if (error.response.status == 401 && !isMobile) {
                 localStorage.removeItem("token");
                 localStorage.removeItem("userId");
                 showModalContent("log-in")
@@ -195,6 +197,8 @@ const Dashboard = () => {
                                         <div className="name-car">
                                             {order_info.driver.car_color.translations[i18next.language].name}
                                             &ensp;
+                                            {order_info.driver.car_make.translations[i18next.language].name}
+                                            &ensp;
                                             {order_info.driver.car_model.translations[i18next.language].name}
                                         </div>
                                         <div className="car-number">
@@ -305,10 +309,10 @@ const Dashboard = () => {
                                         </div>
                                     </div>
                                 </div>
-                                <div className="del-btn">
-                                    <img src="./images/trash.webp" alt="del" loading="lazy"/>
-                                    {t("del_info")}
-                                </div>
+                                {/*<div className="del-btn">*/}
+                                {/*    <img src="./images/trash.webp" alt="del" loading="lazy"/>*/}
+                                {/*    {t("del_info")}*/}
+                                {/*</div>*/}
                             </div>}
                         </div>
                     </div>
@@ -384,7 +388,8 @@ const Dashboard = () => {
                     <span> PLANSHET </span>
                     va
                     <span> MOBIL TELEFON </span>
-                    qurilmalari orqali foydalasnish uchun App store, Play marketdan yuklab olishingiz mumkin!
+                    qurilmalari orqali foydalanish uchun App store yoki Play marketdan "Ada taxi" ilovasini yuklab olishingiz
+                    yuklab olishingiz mumkin!
                 </div>
                 <div className="app-box">
                     <div className="top-side-app">
