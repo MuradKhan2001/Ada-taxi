@@ -208,12 +208,13 @@ const Dashboard = () => {
                                         </div>
                                     </div>
                                     <div className="car-img">
-                                        <img src={baseUrl + order_info.car_category.icon} alt="car" loading="lazy"/>
+                                        <img src={baseUrl + "/" + order_info.car_category.icon} alt="car"
+                                             loading="lazy"/>
                                     </div>
                                 </div>
                                 <div className="driver-info">
                                     <div className="person-img">
-                                        <img src={baseUrl + order_info.driver.profile_image} alt=""/>
+                                        <img src={baseUrl + "/" + order_info.driver.profile_image} alt=""/>
                                     </div>
                                     <div className="info">
                                         <div className="name">
@@ -277,10 +278,36 @@ const Dashboard = () => {
                                         <div className="title">{t("payment_type")}</div>
                                         <div className="value">
                                             <img src="./images/money.webp" alt="money" loading="lazy"/>
-                                            {order_info.payment_type === "cash" && "Naqt"}
-                                            {order_info.payment_type === "card" && "Karta orqali"}
+                                            {order_info.payment_type === "cash" && t("cash")}
+                                            {order_info.payment_type === "card" && t("card")}
                                         </div>
                                     </div>
+                                    {order_info.car_service && order_info.car_service.translations["en"].name === "Postal" && <>
+                                        <div className="list">
+                                            <div className="title">
+                                                {t("sender")}
+                                            </div>
+                                            <div className="value">
+                                                {order_info.sender_phone}
+                                            </div>
+                                        </div>
+                                        <div className="list">
+                                            <div className="title">
+                                                {t("person2")}
+                                            </div>
+                                            <div className="value">
+                                                {order_info.receiver_phone}
+                                            </div>
+                                        </div>
+                                        <div className="list">
+                                            <div className="title">
+                                                {t("pay_who")}
+                                            </div>
+                                            <div className="value">
+                                                {order_info.payer === "sender" ? t("sender") : t("person2")}
+                                            </div>
+                                        </div>
+                                    </>}
                                     <div className="list">
                                         <div className="title">{t("order_id")}</div>
                                         <div className="value">{order_info.id}</div>
@@ -388,7 +415,8 @@ const Dashboard = () => {
                     <span> PLANSHET </span>
                     va
                     <span> MOBIL TELEFON </span>
-                    qurilmalari orqali foydalanish uchun App store yoki Play marketdan "Ada taxi" ilovasini yuklab olishingiz
+                    qurilmalari orqali foydalanish uchun App store yoki Play marketdan "Ada taxi" ilovasini yuklab
+                    olishingiz
                     yuklab olishingiz mumkin!
                 </div>
                 <div className="app-box">

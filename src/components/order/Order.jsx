@@ -147,7 +147,6 @@ const Order = () => {
                         } else dispatch(setPageNumber(4))
                     } else {
                         dispatch(setPageNumber(3))
-                        loader()
                     }
                 }
             })
@@ -285,7 +284,6 @@ const Order = () => {
                 }, 5000);
                 dispatch(clearPickUpLocations())
                 dispatch(clearDropOffLocations())
-                loader()
                 successOrder()
             })
         } else {
@@ -303,19 +301,6 @@ const Order = () => {
         }
 
     };
-
-    const loader = () => {
-        const totalDuration = 3 * 60 * 1000;
-        const interval = 1000;
-        const step = (100 / (totalDuration / interval));
-        const timer = setInterval(() => {
-            setProgress((prev) => {
-                if (prev + step >= 100) return 0;
-                return prev + step;
-            });
-        }, interval);
-        return () => clearInterval(timer);
-    }
 
     const rateDriver = () => {
         let data = {
@@ -564,7 +549,7 @@ const Order = () => {
                     <span>{dots}</span>
                 </div>
                 <div className="loading">
-                    <div className="loader" style={{width: `${progress}%`}}></div>
+                    <span className="loader"></span>
                 </div>
                 <div className="location-box">
                     <div className="location-from">
@@ -618,6 +603,34 @@ const Order = () => {
                             {active_order.payment_type === "cash" ? t("cash") : t("card")}
                         </div>
                     </div>
+
+                    {active_order.car_service && active_order.car_service.translations["en"].name === "Postal" && <>
+                        <div className="information">
+                            <div className="label">
+                                {t("sender")}
+                            </div>
+                            <div className="val">
+                                {active_order.sender_phone}
+                            </div>
+                        </div>
+                        <div className="information">
+                            <div className="label">
+                                {t("person2")}
+                            </div>
+                            <div className="val">
+                                {active_order.receiver_phone}
+                            </div>
+                        </div>
+                        <div className="information">
+                            <div className="label">
+                                {t("pay_who")}
+                            </div>
+                            <div className="val">
+                                {active_order.payer === "sender" ? t("sender") : t("person2")}
+                            </div>
+                        </div>
+                    </>}
+
                     <div className="information">
                         <div className="label">
                             {t("order_id")}
@@ -776,9 +789,37 @@ const Order = () => {
                             {t("payment_type")}
                         </div>
                         <div className="val">
-                            {active_order.payment_type}
+                            {active_order.payment_type === "cash" ? t("cash") : t("card")}
                         </div>
                     </div>
+
+                    {active_order.car_service && active_order.car_service.translations["en"].name === "Postal" && <>
+                        <div className="information">
+                            <div className="label">
+                                {t("sender")}
+                            </div>
+                            <div className="val">
+                                {active_order.sender_phone}
+                            </div>
+                        </div>
+                        <div className="information">
+                            <div className="label">
+                                {t("person2")}
+                            </div>
+                            <div className="val">
+                                {active_order.receiver_phone}
+                            </div>
+                        </div>
+                        <div className="information">
+                            <div className="label">
+                                {t("pay_who")}
+                            </div>
+                            <div className="val">
+                                {active_order.payer === "sender" ? t("sender") : t("person2")}
+                            </div>
+                        </div>
+                    </>}
+
                     <div className="information">
                         <div className="label">
                             {t("order_id")}
@@ -901,6 +942,7 @@ const Order = () => {
                 {/*        <div className="reason">Xavfsiz harakat qilmadi</div>*/}
                 {/*    </div>*/}
                 {/*</div>*/}
+
                 <div className="location-box">
                     <div className="location-from">
                         <div className="location-text">
@@ -957,6 +999,34 @@ const Order = () => {
                             {active_order.payment_type === "cash" ? t("cash") : t("card")}
                         </div>
                     </div>
+
+                    {active_order.car_service && active_order.car_service.translations["en"].name === "Postal" && <>
+                        <div className="information">
+                            <div className="label">
+                                {t("sender")}
+                            </div>
+                            <div className="val">
+                                {active_order.sender_phone}
+                            </div>
+                        </div>
+                        <div className="information">
+                            <div className="label">
+                                {t("person2")}
+                            </div>
+                            <div className="val">
+                                {active_order.receiver_phone}
+                            </div>
+                        </div>
+                        <div className="information">
+                            <div className="label">
+                                {t("pay_who")}
+                            </div>
+                            <div className="val">
+                                {active_order.payer === "sender" ? t("sender") : t("person2")}
+                            </div>
+                        </div>
+                    </>}
+
                     <div className="information">
                         <div className="label">
                             {t("order_id")}

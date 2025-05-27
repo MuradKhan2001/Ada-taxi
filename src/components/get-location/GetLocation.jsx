@@ -240,8 +240,8 @@ const GetLocation = () => {
                 let alert = {
                     id: idAlert,
                     text: t("alert7"),
-                    img: "./images/yellow.svg",
-                    color: "#FFFAEA",
+                    img: "./images/red.svg",
+                    color: "#FFEDF1",
                 };
                 dispatch(addAlert(alert));
                 setTimeout(() => {
@@ -267,8 +267,8 @@ const GetLocation = () => {
                 let alert = {
                     id: idAlert,
                     text: t("alert7"),
-                    img: "./images/yellow.svg",
-                    color: "#FFFAEA",
+                    img: "./images/red.svg",
+                    color: "#FFEDF1",
                 };
                 dispatch(addAlert(alert));
                 setTimeout(() => {

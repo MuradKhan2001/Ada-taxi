@@ -173,23 +173,25 @@ const Modal = () => {
     }
 
     const cencelOrder = () => {
-        let data = {
-            command: "reject_order",
-            order_id: modalContent.id,
-            reason_id: reason
-        }
-        if (webSocked) {
-            webSocked.send(JSON.stringify(data));
-        } else {
-            let idAlertError = Date.now();
-            let alert = {
-                id: idAlertError,
-                text: t("net"),
-                img: "./images/red.svg",
-                color: "#FFEDF1",
-            };
-            dispatch(addAlert(alert));
-        }
+        // let data = {
+        //     command: "reject_order",
+        //     order_id: modalContent.id,
+        //     reason_id: reason
+        // }
+        // if (webSocked) {
+        //     webSocked.send(JSON.stringify(data));
+        // } else {
+        //     let idAlertError = Date.now();
+        //     let alert = {
+        //         id: idAlertError,
+        //         text: t("net"),
+        //         img: "./images/red.svg",
+        //         color: "#FFEDF1",
+        //     };
+        //     dispatch(addAlert(alert));
+        // }
+
+        webSocked(modalContent.id,reason)
     }
 
     useOnKeyPress(checkCode ? CheckCode : HandleLogin, "Enter");

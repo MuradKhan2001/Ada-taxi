@@ -95,5 +95,6 @@
   "tariff_location": "Enter tariff and locations!",
   "other-order": "Who are we ordering for?",
   "send-message": "Write to a specialist",
-  "driver_rate": "Driver rated!"
+  "driver_rate": "Driver rated!",
+  "pay_who": "Who makes the payment:"
 }

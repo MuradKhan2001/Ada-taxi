@@ -1248,6 +1248,7 @@
       justify-content: center;
       color: rgba(20, 20, 20, 1);
       background-color: white;
+
       span {
         width: 20px;
       }
@@ -1255,16 +1256,38 @@
 
     .loading {
       width: 100%;
-      height: 6px;
+      height: 11px;
       background-color: white;
       overflow: hidden;
-
       .loader {
-        width: 30%;
+        width: 100%;
         height: 100%;
-        background-color: rgba(45, 186, 108, 1);
-        transition: width 1s linear;
+        display: inline-block;
+        background-color: rgb(42, 175, 101);
+        background-image: linear-gradient(
+                        45deg,
+                        rgba(255, 255, 255, 0.3) 25%,
+                        transparent 25%,
+                        transparent 50%,
+                        rgba(255, 255, 255, 0.3) 50%,
+                        rgba(255, 255, 255, 0.3) 75%,
+                        transparent 75%,
+                        transparent
+        );
+        font-size: 30px;
+        background-size: 1em 1em;
+        box-sizing: border-box;
+        animation: barStripe 1s linear infinite;
       }
+      @keyframes barStripe {
+        0% {
+          background-position: 1em 0;
+        }
+        100% {
+          background-position: 0 0;
+        }
+      }
+
     }
 
     .location-box {
