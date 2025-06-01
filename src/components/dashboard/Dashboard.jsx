@@ -320,13 +320,16 @@ const Dashboard = () => {
                                     </div>
                                 </div>
                                 <div className="bottom-info">
-                                    <div className="list">
-                                        <div className="title">{t("passangers_count")}</div>
-                                        <div className="value">
-                                            <img src="./images/users.webp" alt="users" loading="lazy"/>
-                                            {order_info.passanger_count}
-                                        </div>
-                                    </div>
+                                    {order_info.car_service && order_info.car_service.translations["en"].name !== "Postal" &&
+                                        <div className="list">
+                                            <div className="title">
+                                                {t("passangers_count")}
+                                            </div>
+                                            <div className="value">
+                                                {order_info.passanger_count}
+                                            </div>
+                                        </div>}
+
                                     <div className="list">
                                         <div className="title">
                                             {t("price")}

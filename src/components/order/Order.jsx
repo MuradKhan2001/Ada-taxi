@@ -23,7 +23,6 @@ const Order = () => {
     const baseUrl = useSelector((store) => store.baseUrl.data)
     const orderPage = useSelector((store) => store.OrderPage.data)
     const active_order = useSelector((store) => store.ActiveOrders.data)
-    const [progress, setProgress] = useState(0);
     const dispatch = useDispatch();
     const PickUpLocations = useSelector((store) => store.PickUpLocations.data)
     const DropOffLocations = useSelector((store) => store.DropOffLocations.data)
@@ -61,7 +60,6 @@ const Order = () => {
 
     useEffect(() => {
         if (localStorage.getItem("token")) {
-
             axios.get(`${baseUrl}/api/v1/extra-services/`, {
                 headers: {
                     "Authorization": `Token ${localStorage.getItem("token")}`
@@ -393,7 +391,10 @@ const Order = () => {
                 </div>
                 <div className="tarif-box">
                     {direction.map((item, index) => {
-                        return <div key={index} onClick={() => setActive_direction(item.id)}
+                        return <div key={index} onClick={() => {
+                            setActive_direction(item.id)
+                            setActive_price("")
+                        }}
                                     className={`tarif ${item.id === active_direction && "active"}`}>
                             {item.name}
                         </div>
@@ -430,30 +431,31 @@ const Order = () => {
                     </div>
                 </div>
 
-                {active_direction !== "postal" && OtherClients.name && OtherClients.phone ? <div className="other">
-                    <div className="left">
-                        <img src="./images/user-1.webp" alt="sms" loading="lazy"/>
-                        <div className="info">
-                            <div className="name">
-                                {OtherClients.name}
-                            </div>
-                            <div className="phone">
-                                {OtherClients.phone}
-                            </div>
-                        </div>
-                    </div>
-                    <div className="right">
-                        <img onClick={delClient} src="./images/trash.webp" alt="more"
-                             loading="lazy"/>
-                    </div>
-                </div> : active_direction !== "postal" &&
-                    <div onClick={() => showModalContent("add-other")} className="funtion">
-                        <div className="left">
-                            <img src="./images/user-1.webp" alt="sms" loading="lazy"/>
-                            {t("other_order")}
-                        </div>
-                        <img src="./images/more.webp" alt="more" loading="lazy"/>
-                    </div>}
+                {/*{active_direction !== "postal" && OtherClients.name && OtherClients.phone ? <div className="other">*/}
+                {/*    <div className="left">*/}
+                {/*        <img src="./images/user-1.webp" alt="sms" loading="lazy"/>*/}
+                {/*        <div className="info">*/}
+                {/*            <div className="name">*/}
+                {/*                {OtherClients.name}*/}
+                {/*            </div>*/}
+                {/*            <div className="phone">*/}
+                {/*                {OtherClients.phone}*/}
+                {/*            </div>*/}
+                {/*        </div>*/}
+                {/*    </div>*/}
+                {/*    <div className="right">*/}
+                {/*        <img onClick={delClient} src="./images/trash.webp" alt="more"*/}
+                {/*             loading="lazy"/>*/}
+                {/*    </div>*/}
+                {/*</div> : active_direction !== "postal" &&*/}
+                {/*    <div onClick={() => showModalContent("add-other")} className="funtion">*/}
+                {/*        <div className="left">*/}
+                {/*            <img src="./images/user-1.webp" alt="sms" loading="lazy"/>*/}
+                {/*            {t("other_order")}*/}
+                {/*        </div>*/}
+                {/*        <img src="./images/more.webp" alt="more" loading="lazy"/>*/}
+                {/*    </div>}*/}
+
                 <div className="services">
                     {active_direction !== "postal" && services.map((item, index) => {
                         const isActive = active_service.includes(item.id);
@@ -649,14 +651,16 @@ const Order = () => {
                     </div>
                 </div>
                 <div className="price-order">
-                    <div className="information">
-                        <div className="label">
-                            {t("passangers_count")}
-                        </div>
-                        <div className="val">
-                            {active_order.passanger_count}
-                        </div>
-                    </div>
+                    {active_order.car_service && active_order.car_service.translations["en"].name !== "Postal" &&
+                        <div className="information">
+                            <div className="label">
+                                {t("passangers_count")}
+                            </div>
+                            <div className="val">
+                                {active_order.passanger_count}
+                            </div>
+                        </div>}
+
                     <div className="information">
                         <div className="label">
                             {t("price")}
@@ -838,14 +842,15 @@ const Order = () => {
                     </div>
                 </div>
                 <div className="price-order">
-                    <div className="information">
-                        <div className="label">
-                            {t("passangers_count")}
-                        </div>
-                        <div className="val">
-                            {active_order.passanger_count} kishi
-                        </div>
-                    </div>
+                    {active_order.car_service && active_order.car_service.translations["en"].name !== "Postal" &&
+                        <div className="information">
+                            <div className="label">
+                                {t("passangers_count")}
+                            </div>
+                            <div className="val">
+                                {active_order.passanger_count}
+                            </div>
+                        </div>}
 
                     <div className="information">
                         <div className="label">
@@ -1045,14 +1050,15 @@ const Order = () => {
                     </div>
                 </div>
                 <div className="price-order">
-                    <div className="information">
-                        <div className="label">
-                            {t("passangers_count")}
-                        </div>
-                        <div className="val">
-                            {active_order.passanger_count} kishi
-                        </div>
-                    </div>
+                    {active_order.car_service && active_order.car_service.translations["en"].name !== "Postal" &&
+                        <div className="information">
+                            <div className="label">
+                                {t("passangers_count")}
+                            </div>
+                            <div className="val">
+                                {active_order.passanger_count}
+                            </div>
+                        </div>}
 
                     <div className="information">
                         <div className="label">
@@ -1232,7 +1238,7 @@ const Order = () => {
 
                     <div className="form-date">
                         <div className="label">
-                            {t("date")}
+                            {active_direction !== "postal" ? t("date") : t("date2")}
                         </div>
                         <div className="input-time">
                             <input value={pick_up_date} onChange={(e) => setPick_up_date(e.target.value)} type="date"/>
