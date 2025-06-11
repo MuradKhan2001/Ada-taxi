@@ -1407,6 +1407,37 @@
       }
     }
 
+    .information-plus{
+      background-color: white;
+      padding: 10px 16px;
+      width: 100%;
+      display: block;
+      height: auto;
+      border-top: 1px solid rgba(162, 164, 166, 0.24);
+      .label {
+        color: rgba(113, 116, 120, 1);
+        font-weight: 400;
+        font-size: 15px;
+        line-height: 20px;
+      }
+
+      .val {
+        margin-top: 10px;
+        color: rgba(20, 20, 20, 1);
+        font-weight: 400;
+        font-size: 13px;
+        line-height: 20px;
+
+        span{
+          margin-right: 5px;
+          padding: 3px 5px;
+          background: #eaeaea;
+          border-radius: 6px;
+        }
+
+      }
+    }
+
     .price-order {
       width: 100%;
       margin-top: 6px;
@@ -1825,6 +1856,37 @@
             margin-right: 5px;
           }
         }
+      }
+    }
+
+    .information-plus{
+      background-color: white;
+      padding: 10px 16px;
+      width: 100%;
+      display: block;
+      height: auto;
+      border-top: 1px solid rgba(162, 164, 166, 0.24);
+      .label {
+        color: rgba(113, 116, 120, 1);
+        font-weight: 400;
+        font-size: 15px;
+        line-height: 20px;
+      }
+
+      .val {
+        margin-top: 10px;
+        color: rgba(20, 20, 20, 1);
+        font-weight: 400;
+        font-size: 13px;
+        line-height: 20px;
+
+        span{
+          margin-right: 5px;
+          padding: 3px 5px;
+          background: #eaeaea;
+          border-radius: 6px;
+        }
+
       }
     }
 
@@ -2269,6 +2331,37 @@
             margin-right: 5px;
           }
         }
+      }
+    }
+
+    .information-plus{
+      background-color: white;
+      padding: 10px 16px;
+      width: 100%;
+      display: block;
+      height: auto;
+      border-top: 1px solid rgba(162, 164, 166, 0.24);
+      .label {
+        color: rgba(113, 116, 120, 1);
+        font-weight: 400;
+        font-size: 15px;
+        line-height: 20px;
+      }
+
+      .val {
+        margin-top: 10px;
+        color: rgba(20, 20, 20, 1);
+        font-weight: 400;
+        font-size: 13px;
+        line-height: 20px;
+
+        span{
+          margin-right: 5px;
+          padding: 3px 5px;
+          background: #eaeaea;
+          border-radius: 6px;
+        }
+
       }
     }
 

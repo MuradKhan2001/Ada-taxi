@@ -1,8 +1,8 @@
-import {useRef, useState, useMemo, useEffect} from "react";
+import React, {useRef, useState, useMemo, useEffect} from "react";
 import {CSSTransition} from "react-transition-group";
 import {useSelector, useDispatch} from "react-redux";
 import axios from "axios";
-import {GoogleMap, Marker, useLoadScript} from "@react-google-maps/api";
+import {GoogleMap, Marker, MarkerF, useLoadScript} from "@react-google-maps/api";
 import {Combobox, ComboboxInput, ComboboxOption} from "@reach/combobox";
 import i18next from "i18next";
 import {GOOGLE_MAPS_API_KEY} from "./googleMapsApi";
@@ -77,6 +77,10 @@ const GetLocation = () => {
     const selectAddressIcon = {
         url: "./images/address.png",
         scaledSize: {width: 40, height: 50},
+    };
+    const selectAddressMyIcon = {
+        url: "./images/my-loc.png",
+        scaledSize: {width: 40, height: 40},
     };
 
     const PlacesAutocomplete = ({setSelected}) => {
@@ -330,6 +334,13 @@ const GetLocation = () => {
                                 {selected && (
                                     <Marker icon={selectAddressIcon} position={selected}/>
                                 )}
+
+                                {center && (
+                                    <MarkerF
+                                        position={center}
+                                        icon={selectAddressMyIcon}
+                                    />)}
+
                                 <div className="search-address">
                                     <div className="places-container">
                                         <PlacesAutocomplete setSelected={setSelected}/>

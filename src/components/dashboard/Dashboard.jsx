@@ -318,7 +318,24 @@ const Dashboard = () => {
                                             {order_info.end_date ? order_info.end_date : order_info.pick_up_date}
                                         </div>
                                     </div>
+
+                                    {order_info.car_service && order_info.car_service.translations["en"].name !== "Postal" &&
+                                        <div className="information-plus">
+                                            <div className="label">
+                                                {t("plus_service")}
+                                            </div>
+                                            <div className="val">
+                                                {order_info.extra_services.map((item, index) => {
+                                                    return <span key={index}>
+                                        {item.translations[i18next.language].name}
+                                    </span>
+                                                })}
+                                                <span>dnm sd</span>
+                                                <span>dn asm dmanm sd</span>
+                                            </div>
+                                        </div>}
                                 </div>
+
                                 <div className="bottom-info">
                                     {order_info.car_service && order_info.car_service.translations["en"].name !== "Postal" &&
                                         <div className="list">

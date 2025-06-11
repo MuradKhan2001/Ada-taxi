@@ -252,7 +252,7 @@ const Order = () => {
             car_category: active_price,
             passanger_count: client_count,
             payment_type: PaymentType.payment_type,
-            pick_up_date: `${pick_up_date}T${pick_up_time}Z`,
+            pick_up_date: `${pick_up_date}T${pick_up_time}`,
             end_date: null,
             book_all_seats: all_seats,
             comment_to_driver: comment_driver,
@@ -605,7 +605,6 @@ const Order = () => {
                             {active_order.payment_type === "cash" ? t("cash") : t("card")}
                         </div>
                     </div>
-
                     {active_order.car_service && active_order.car_service.translations["en"].name === "Postal" && <>
                         <div className="information">
                             <div className="label">
@@ -632,7 +631,6 @@ const Order = () => {
                             </div>
                         </div>
                     </>}
-
                     <div className="information">
                         <div className="label">
                             {t("order_id")}
@@ -650,6 +648,20 @@ const Order = () => {
                         </div>
                     </div>
                 </div>
+                {active_order.car_service && active_order.car_service.translations["en"].name !== "Postal" &&
+                    <div className="information-plus">
+                        <div className="label">
+                            {t("plus_service")}
+                        </div>
+                        <div className="val">
+                            {active_order.extra_services.map((item, index) => {
+                                return <span key={index}>
+                                        {item.translations[i18next.language].name}
+                                    </span>
+                            })}
+
+                        </div>
+                    </div>}
                 <div className="price-order">
                     {active_order.car_service && active_order.car_service.translations["en"].name !== "Postal" &&
                         <div className="information">
@@ -841,6 +853,20 @@ const Order = () => {
                         </div>
                     </div>
                 </div>
+                {active_order.car_service && active_order.car_service.translations["en"].name !== "Postal" &&
+                    <div className="information-plus">
+                        <div className="label">
+                            {t("plus_service")}
+                        </div>
+                        <div className="val">
+                            {active_order.extra_services.map((item, index) => {
+                                return <span key={index}>
+                                        {item.translations[i18next.language].name}
+                                    </span>
+                            })}
+
+                        </div>
+                    </div>}
                 <div className="price-order">
                     {active_order.car_service && active_order.car_service.translations["en"].name !== "Postal" &&
                         <div className="information">
@@ -1049,6 +1075,20 @@ const Order = () => {
                         </div>
                     </div>
                 </div>
+                {active_order.car_service && active_order.car_service.translations["en"].name !== "Postal" &&
+                    <div className="information-plus">
+                        <div className="label">
+                            {t("plus_service")}
+                        </div>
+                        <div className="val">
+                            {active_order.extra_services.map((item, index) => {
+                                return <span key={index}>
+                                        {item.translations[i18next.language].name}
+                                    </span>
+                            })}
+
+                        </div>
+                    </div>}
                 <div className="price-order">
                     {active_order.car_service && active_order.car_service.translations["en"].name !== "Postal" &&
                         <div className="information">
@@ -1104,7 +1144,7 @@ const Order = () => {
                         </div>
                         <div className="count">
                             <div onClick={() => {
-                                if (client_count > 0) {
+                                if (client_count > 1) {
                                     setClient_count(prevState => prevState - 1)
                                 }
                             }} className="button">
@@ -1114,7 +1154,11 @@ const Order = () => {
                             <span>{client_count}</span>
 
                             <div onClick={() => {
-                                if (client_count < 12) {
+                                if (active_direction === "regional") {
+                                    if (client_count < 4) {
+                                        setClient_count(prevState => prevState + 1)
+                                    }
+                                } else if (client_count < 12) {
                                     setClient_count(prevState => prevState + 1)
                                 }
                             }} className="button">
