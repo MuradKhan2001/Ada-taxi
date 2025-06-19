@@ -16,6 +16,7 @@ import {setPageNumber} from "../../redux/OrderPage";
 import {addAlert, delAlert} from "../../redux/AlertsBox";
 import success from "../app/sound/success.wav";
 import success2 from "../app/sound/success2.wav";
+import AnimatedPrice from "./AnimatedPrice";
 
 const Order = () => {
     let webSocked = useContext(webSockedContext);
@@ -480,14 +481,44 @@ const Order = () => {
                     })}
 
                     {active_direction !== "postal" &&
-                        <div onClick={() => dispatch(setPageNumber(1))} className="service cursor">
+                        <div onClick={() => {
+                            if (active_price) {
+                                dispatch(setPageNumber(1))
+                            } else {
+                                let idAlertError = Date.now();
+                                let alert = {
+                                    id: idAlertError,
+                                    text: t("tariff_location"),
+                                    img: "./images/red.svg",
+                                    color: "#FFEDF1",
+                                };
+                                dispatch(addAlert(alert));
+                                setTimeout(() => {
+                                    dispatch(delAlert(idAlertError));
+                                }, 5000);
+                            }
+                        }} className="service cursor">
                             <div className="left">
                                 <img src="./images/filter.webp" alt="sms" loading="lazy"/>
                                 {t("plus_service")}
                             </div>
-                            <img src="./images/more.webp" alt="more" loading="lazy"/>
+
+
+                            <div className="right">
+                                {
+                                    active_service.length > 0 &&
+                                    <div className="count-service">
+                                        {active_service.length}
+                                    </div>
+                                }
+
+
+                                <img src="./images/more.webp" alt="more" loading="lazy"/>
+                            </div>
+
                         </div>}
                 </div>
+
             </div>}
             {orderPage === 0 && <div onClick={() => {
                 if (PickUpLocations[0].latitude !== null && DropOffLocations[0].latitude !== null && active_price) {
@@ -541,6 +572,20 @@ const Order = () => {
                         </div>
                     }
                 })}
+                <div className="form-date">
+                    <div className="label">
+                        {t("price")}
+                    </div>
+                    <div className="input-time">
+                        {price_list.map((item, index) => {
+                            if (active_price === item.category.id) {
+                                return <span key={index}>
+                                     <AnimatedPrice price={item.cost}/>
+                                </span>
+                            }
+                        })}
+                    </div>
+                </div>
             </div>}
 
             {orderPage === 3 && <div className="search-driver">
@@ -1188,7 +1233,9 @@ const Order = () => {
                     <div className="input-time">
                         {price_list.map((item, index) => {
                             if (active_price === item.category.id) {
-                                return <span key={index}>{item.cost} {t("sum")}</span>
+                                return <span key={index}>
+                                     <AnimatedPrice price={item.cost}/>
+                                </span>
                             }
                         })}
                     </div>

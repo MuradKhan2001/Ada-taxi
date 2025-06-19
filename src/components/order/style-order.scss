@@ -335,6 +335,7 @@
       .active {
         background-color: rgba(45, 186, 108, 1);
         color: white;
+
         &:hover {
           background-color: rgba(45, 186, 108, 1);
           color: white;
@@ -642,8 +643,26 @@
           }
         }
 
-        img {
-          width: 6px;
+        .right {
+          display: flex;
+          align-items: center;
+
+          .count-service {
+            width: 24px;
+            height: 24px;
+            background: rgba(2, 145, 217, 1);
+            border-radius: 50%;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 13px;
+          }
+
+          img {
+            width: 6px;
+          }
         }
 
         .on-of {
@@ -787,6 +806,32 @@
         background-color: rgba(45, 186, 108, 1);
       }
     }
+
+    .form-date {
+      border-radius: 10px;
+      padding: 10px 16px;
+      width: 96%;
+      margin: 8px auto 8px auto;
+      height: 55px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(162, 164, 166, 0.24);
+      background-color: white;
+      box-shadow: 0px 0.5px 2px 0px rgba(51, 51, 51, 0.08);
+
+      .label {
+        color: rgba(20, 20, 20, 1);
+        font-size: 15px;
+        line-height: 20px;
+      }
+
+      .input-time {
+        span{
+          font-weight: bold;
+        }
+      }
+    }
   }
 
   .info-box {
@@ -846,6 +891,9 @@
           &:focus {
             outline: none;
           }
+        }
+        span{
+          font-weight: bold;
         }
       }
     }
@@ -1264,6 +1312,7 @@
       height: 11px;
       background-color: white;
       overflow: hidden;
+
       .loader {
         width: 100%;
         height: 100%;
@@ -1284,6 +1333,7 @@
         box-sizing: border-box;
         animation: barStripe 1s linear infinite;
       }
+
       @keyframes barStripe {
         0% {
           background-position: 1em 0;
@@ -1407,13 +1457,14 @@
       }
     }
 
-    .information-plus{
+    .information-plus {
       background-color: white;
       padding: 10px 16px;
       width: 100%;
       display: block;
       height: auto;
       border-top: 1px solid rgba(162, 164, 166, 0.24);
+
       .label {
         color: rgba(113, 116, 120, 1);
         font-weight: 400;
@@ -1428,7 +1479,7 @@
         font-size: 13px;
         line-height: 20px;
 
-        span{
+        span {
           margin-right: 5px;
           padding: 3px 5px;
           background: #eaeaea;
@@ -1859,13 +1910,14 @@
       }
     }
 
-    .information-plus{
+    .information-plus {
       background-color: white;
       padding: 10px 16px;
       width: 100%;
       display: block;
       height: auto;
       border-top: 1px solid rgba(162, 164, 166, 0.24);
+
       .label {
         color: rgba(113, 116, 120, 1);
         font-weight: 400;
@@ -1880,7 +1932,7 @@
         font-size: 13px;
         line-height: 20px;
 
-        span{
+        span {
           margin-right: 5px;
           padding: 3px 5px;
           background: #eaeaea;
@@ -2334,13 +2386,14 @@
       }
     }
 
-    .information-plus{
+    .information-plus {
       background-color: white;
       padding: 10px 16px;
       width: 100%;
       display: block;
       height: auto;
       border-top: 1px solid rgba(162, 164, 166, 0.24);
+
       .label {
         color: rgba(113, 116, 120, 1);
         font-weight: 400;
@@ -2355,7 +2408,7 @@
         font-size: 13px;
         line-height: 20px;
 
-        span{
+        span {
           margin-right: 5px;
           padding: 3px 5px;
           background: #eaeaea;

@@ -117,8 +117,7 @@ const Modal = () => {
     };
 
     const CheckCode = () => {
-        axios
-            .post(`${baseUrl}/api/v1/auth/verify_code/`, {
+        axios.post(`${baseUrl}/api/v1/auth/verify_code/`, {
                 user: localStorage.getItem("userId"),
                 code: code,
                 role: "client"
@@ -127,17 +126,6 @@ const Modal = () => {
                 localStorage.setItem("token", response.data.token);
                 dispatch(hideModal({show: false}))
                 window.location.pathname = "/edit-profile";
-                let idAlert = Date.now();
-                let alert = {
-                    id: idAlert,
-                    text: t("register"),
-                    img: "./images/green.svg",
-                    color: "#FFFAEA",
-                };
-                dispatch(addAlert(alert));
-                setTimeout(() => {
-                    dispatch(delAlert(idAlert));
-                }, 5000);
             })
             .catch((error) => {
                 if (error.response.status === 400) {
@@ -173,24 +161,6 @@ const Modal = () => {
     }
 
     const cencelOrder = () => {
-        // let data = {
-        //     command: "reject_order",
-        //     order_id: modalContent.id,
-        //     reason_id: reason
-        // }
-        // if (webSocked) {
-        //     webSocked.send(JSON.stringify(data));
-        // } else {
-        //     let idAlertError = Date.now();
-        //     let alert = {
-        //         id: idAlertError,
-        //         text: t("net"),
-        //         img: "./images/red.svg",
-        //         color: "#FFEDF1",
-        //     };
-        //     dispatch(addAlert(alert));
-        // }
-
         webSocked(modalContent.id,reason)
     }
 

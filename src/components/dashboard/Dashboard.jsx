@@ -318,7 +318,6 @@ const Dashboard = () => {
                                             {order_info.end_date ? order_info.end_date : order_info.pick_up_date}
                                         </div>
                                     </div>
-
                                     {order_info.car_service && order_info.car_service.translations["en"].name !== "Postal" &&
                                         <div className="information-plus">
                                             <div className="label">
@@ -330,8 +329,6 @@ const Dashboard = () => {
                                         {item.translations[i18next.language].name}
                                     </span>
                                                 })}
-                                                <span>dnm sd</span>
-                                                <span>dn asm dmanm sd</span>
                                             </div>
                                         </div>}
                                 </div>
@@ -436,8 +433,7 @@ const Dashboard = () => {
                     va
                     <span> MOBIL TELEFON </span>
                     qurilmalari orqali foydalanish uchun App store yoki Play marketdan "Ada taxi" ilovasini yuklab
-                    olishingiz
-                    yuklab olishingiz mumkin!
+                    olishingiz mumkin!
                 </div>
                 <div className="app-box">
                     <div className="top-side-app">
