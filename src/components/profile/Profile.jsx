@@ -6,6 +6,7 @@ import {useDispatch, useSelector} from "react-redux";
 import {showModals} from "../../redux/ModalContent";
 import axios from "axios";
 import {useTranslation} from "react-i18next";
+import {addAlert, delAlert} from "../../redux/AlertsBox";
 
 
 const Profile = () => {
@@ -14,9 +15,11 @@ const Profile = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const [profile_info, setProfileInfo] = useState({});
+    const [myCode, setMyCode] = useState("");
 
     useEffect(() => {
         if (localStorage.getItem("token")) {
+
             axios.get(`${baseUrl}/api/v1/client/`, {
                 headers: {
                     "Authorization": `Token ${localStorage.getItem("token")}`
@@ -30,8 +33,35 @@ const Profile = () => {
                     showModalContent("log-in")
                 }
             })
+
+            axios.get(`${baseUrl}/api/v1/mycode/`, {
+                headers: {
+                    "Authorization": `Token ${localStorage.getItem("token")}`
+                }
+            }).then((response) => {
+                setMyCode(response.data.code);
+            })
         }
     }, []);
+
+    const handleCopy = () => {
+        if (myCode) {
+            navigator.clipboard.writeText(myCode)
+                .then(() => {
+                    let idAlert = Date.now();
+                    let alert = {
+                        id: idAlert,
+                        text: t("referal_alert5"),
+                        img: "./images/green.svg",
+                        color: "#EDFFFA",
+                    };
+                    dispatch(addAlert(alert));
+                    setTimeout(() => {
+                        dispatch(delAlert(idAlert));
+                    }, 5000);
+                })
+        }
+    };
 
     const showModalContent = (status) => {
         dispatch(showModals({show: true, status: status}));
@@ -69,6 +99,16 @@ const Profile = () => {
                                 {profile_info.finished_orders_count}
                             </div>
                         </div>
+                        <div className="line"></div>
+
+                        <div className="lef-code">
+                            <div className="label">{t("your_code")}</div>
+                            <div className="your-code">
+                                {myCode}
+                                <img onClick={handleCopy} src="./images/copy.png" alt="copy"/>
+                            </div>
+                        </div>
+
                     </div>
                     <div className="contacts">
                         <div className="item">

@@ -69,7 +69,6 @@ const Order = () => {
                 setServices(response.data);
             })
         }
-        getPrice()
         getActiveOrders()
     }, []);
 
@@ -203,33 +202,34 @@ const Order = () => {
         }
     };
 
-    const getPrice = () => {
-        let price_info = {
-            service: active_direction,
-            from_region: {
-                "latitude": 41.309484,
-                "longitude": 69.251330
-            },
-            to_region: {
-                "latitude": 40.764860,
-                "longitude": 72.309999
-            },
-            passanger_count: client_count,
-            book_all_seats: all_seats,
-            extra_services: active_service
-        }
-
-        axios.get(`https://api.adataxi.uz/api/v1/get-prices/`, price_info).then((response) => {
-            setPrice_list(response.data);
-        })
-    }
+    // const getPrice = () => {
+    //     let price_info = {
+    //         service: active_direction,
+    //         from_region: {
+    //             "latitude": 41.309484,
+    //             "longitude": 69.251330
+    //         },
+    //         to_region: {
+    //             "latitude": 40.764860,
+    //             "longitude": 72.309999
+    //         },
+    //         passanger_count: client_count,
+    //         book_all_seats: all_seats,
+    //         extra_services: active_service
+    //     }
+    //
+    //     axios.get(`https://api.adataxi.uz/api/v1/get-prices/`, price_info).then((response) => {
+    //         setPrice_list(response.data);
+    //     }).catch((error) => {
+    //         console.log(error)
+    //     })
+    // }
 
     const getLocations = (location_num = "", location_status = "") => {
         dispatch(ShowHideModal({show: true, location_num, location_status}));
     }
 
     const getData = () => {
-
         let data = {
             service: active_direction,
             from_region: PickUpLocations[0].latitude !== null ? PickUpLocations[0] : {},
@@ -239,12 +239,34 @@ const Order = () => {
             extra_services: active_service
         }
 
-        if ((PickUpLocations[0].latitude !== null) === (DropOffLocations[0].latitude !== null)) {
-            axios.post(`https://api.adataxi.uz/api/v1/get-prices/`, data).then((response) => {
-                setPrice_list(response.data)
-            })
-        }
+        if (localStorage.getItem("token")) {
+            if ((PickUpLocations[0].latitude !== null) === (DropOffLocations[0].latitude !== null)) {
+                axios.post(`https://api.adataxi.uz/api/v1/get-prices/`, data, {
+                    headers: {
+                        "Authorization": `Token ${localStorage.getItem("token")}`
+                    }
+                }).then((response) => {
+                    setPrice_list(response.data)
+                    setActive_price(response.data[0].category?.id)
+                }).catch((error) => {
+                    if (error.response.data.code === -40) {
+                        dispatch(clearDropOffLocations())
+                        let idAlert = Date.now();
+                        let alert = {
+                            id: idAlert,
+                            text: t("location-error"),
+                            img: "./images/red.svg",
+                            color: "#ffeaea",
+                        };
+                        dispatch(addAlert(alert));
+                        setTimeout(() => {
+                            dispatch(delAlert(idAlert));
+                        }, 5000);
 
+                    }
+                })
+            }
+        }
     }
 
     const SendOrder = () => {
@@ -409,7 +431,20 @@ const Order = () => {
                                 <img src={item.category && item.category.icon} alt="car" loading="lazy"/>
                                 <div
                                     className="name">{item.category && item.category.translations[i18next.language].name}</div>
-                                <div className="price">{item.cost} {t("sum")}</div>
+
+                                {item.discount_price > 0 ? <div className="price-discount">
+
+                                    <div className="main-price">
+                                        {item.cost} {t("sum")}
+                                    </div>
+
+                                    <div className="discount-price">
+                                        {item.discount_price} {t("sum")}
+                                    </div>
+
+                                </div> : <div className="price">
+                                    {item.cost} {t("sum")}
+                                </div>}
                             </div>
                         </div>
                     })}
@@ -431,7 +466,6 @@ const Order = () => {
                         <img src="./images/more.webp" alt="more" loading="lazy"/>
                     </div>
                 </div>
-
                 {/*{active_direction !== "postal" && OtherClients.name && OtherClients.phone ? <div className="other">*/}
                 {/*    <div className="left">*/}
                 {/*        <img src="./images/user-1.webp" alt="sms" loading="lazy"/>*/}
@@ -502,8 +536,6 @@ const Order = () => {
                                 <img src="./images/filter.webp" alt="sms" loading="lazy"/>
                                 {t("plus_service")}
                             </div>
-
-
                             <div className="right">
                                 {
                                     active_service.length > 0 &&
@@ -515,10 +547,8 @@ const Order = () => {
 
                                 <img src="./images/more.webp" alt="more" loading="lazy"/>
                             </div>
-
                         </div>}
                 </div>
-
             </div>}
             {orderPage === 0 && <div onClick={() => {
                 if (PickUpLocations[0].latitude !== null && DropOffLocations[0].latitude !== null && active_price) {
@@ -580,7 +610,18 @@ const Order = () => {
                         {price_list.map((item, index) => {
                             if (active_price === item.category.id) {
                                 return <span key={index}>
-                                     <AnimatedPrice price={item.cost}/>
+                                     {item.discount_price > 0 ? <div className="price-discount">
+                                         <div className="main-price">
+                                             {item.cost} {t("sum")}
+                                         </div>
+
+                                         <div className="discount-price">
+                                             <AnimatedPrice price={item.discount_price}/>
+                                         </div>
+
+                                     </div> : <div className="price">
+                                         <AnimatedPrice price={item.cost}/> {t("sum")}
+                                     </div>}
                                 </span>
                             }
                         })}
@@ -722,8 +763,11 @@ const Order = () => {
                         <div className="label">
                             {t("price")}
                         </div>
+
                         <div className="val-price">
-                            {active_order.price} {t("sum")}
+                            {active_order.discount_price > 0 && active_order.discount_price}
+                            {active_order.cost > 0 && active_order.cost}
+                            {t("sum")}
                         </div>
                     </div>
                 </div>
@@ -928,7 +972,9 @@ const Order = () => {
                             {t("price")}
                         </div>
                         <div className="val-price">
-                            {active_order.price} {t("sum")}
+                            {active_order.discount_price > 0 && active_order.discount_price}
+                            {active_order.cost > 0 && active_order.cost}
+                            {t("sum")}
                         </div>
                     </div>
                 </div>
@@ -1234,7 +1280,18 @@ const Order = () => {
                         {price_list.map((item, index) => {
                             if (active_price === item.category.id) {
                                 return <span key={index}>
-                                     <AnimatedPrice price={item.cost}/>
+                                     {item.discount_price > 0 ? <div className="price-discount">
+                                         <div className="main-price">
+                                             {item.cost} {t("sum")}
+                                         </div>
+
+                                         <div className="discount-price">
+                                             <AnimatedPrice price={item.discount_price}/>
+                                         </div>
+
+                                     </div> : <div className="price">
+                                         <AnimatedPrice price={item.cost}/> {t("sum")}
+                                     </div>}
                                 </span>
                             }
                         })}

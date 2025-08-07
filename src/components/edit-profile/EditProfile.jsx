@@ -78,7 +78,7 @@ const EditProfile = () => {
                 id: idAlert,
                 text: t("save_info"),
                 img: "./images/green.svg",
-                color: "#FFFAEA",
+                color: "#EDFFFA",
             };
             dispatch(addAlert(alert));
             setTimeout(() => {

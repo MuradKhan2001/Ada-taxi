@@ -4,7 +4,7 @@ export const ModalContent = createSlice({
     name: "ModalContent",
     initialState: {
         data: {
-            show: false
+            show: false,
         }
     },
     reducers: {

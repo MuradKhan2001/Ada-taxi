@@ -69,12 +69,17 @@ const Header = () => {
                 }}>
                     {t("my_orders")}
                 </b>
+
                 <b onClick={() => showModalContent("about-app")}>
                     {t("app_links")}
                 </b>
 
                 <b onClick={() => showModalContent("download-app")}>
                     {t("download_app")}
+                </b>
+
+                <b onClick={() => showModalContent("news")}>
+                    {t("news")}
                 </b>
             </div>
             <div className="header-buttons">

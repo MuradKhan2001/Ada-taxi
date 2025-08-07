@@ -164,6 +164,7 @@ const Dashboard = () => {
                                                     </div>
                                                 </div>
                                                 <div className="price">
+
                                                     {item.price} {t("sum")}
                                                 </div>
                                             </div>
@@ -349,7 +350,8 @@ const Dashboard = () => {
                                             {t("price")}
                                         </div>
                                         <div className="value price">
-                                            {order_info.price} {t("sum")}
+                                            {order_info.discount_price > 0 && order_info.discount_price}
+                                            {order_info.price > 0 && order_info.price} {t("sum")}
                                         </div>
                                     </div>
                                 </div>

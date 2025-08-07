@@ -112,6 +112,33 @@
           }
 
         }
+
+        .lef-code{
+          .label {
+            color: rgba(113, 116, 120, 1);
+            font-size: 13px;
+          }
+          .your-code {
+            margin: 0 auto;
+            margin-top: 6px;
+            width: max-content;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+
+            img{
+              &:hover{
+                transform: scale(1.1);
+              }
+              cursor: pointer;
+              margin-left: 12px;
+              width: 20px;
+              transition: .3s;
+            }
+          }
+        }
+
+
       }
 
       .contacts {

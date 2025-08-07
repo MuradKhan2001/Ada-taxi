@@ -23,6 +23,7 @@ const Modal = () => {
     const dispatch = useDispatch();
     const modalContent = useSelector((store) => store.ModalContent.data);
     const PaymentType = useSelector((store) => store.PaymentType.data)
+    const [RefCode, setRefCode] = useState("");
 
     const [phone, setPhone] = useState("");
     const [code, setCode] = useState("");
@@ -33,6 +34,11 @@ const Modal = () => {
     const [reasonList, setReasonList] = useState([]);
     const [other_clinet_phone, setOtherClinetPhone] = useState("");
     const [other_clinet_name, setOtherClinetName] = useState("");
+
+    const [newsList, setNewsList] = useState([]);
+    const [discountList, setDiscountList] = useState([]);
+
+    const [myCode, setMyCode] = useState("");
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -63,6 +69,31 @@ const Modal = () => {
             }).then((response) => {
                 setReasonList(response.data);
             })
+
+            axios.get(`${baseUrl}/api/v1/mycode/`, {
+                headers: {
+                    "Authorization": `Token ${localStorage.getItem("token")}`
+                }
+            }).then((response) => {
+                setMyCode(response.data.code);
+            })
+
+            axios.get(`${baseUrl}/api/v1/news/`, {
+                headers: {
+                    "Authorization": `Token ${localStorage.getItem("token")}`
+                }
+            }).then((response) => {
+                setNewsList(response.data);
+            })
+
+            axios.get(`${baseUrl}/api/v1/my-discount/`, {
+                headers: {
+                    "Authorization": `Token ${localStorage.getItem("token")}`
+                }
+            }).then((response) => {
+                setDiscountList(response.data);
+            })
+
         }
     }, []);
 
@@ -118,14 +149,32 @@ const Modal = () => {
 
     const CheckCode = () => {
         axios.post(`${baseUrl}/api/v1/auth/verify_code/`, {
-                user: localStorage.getItem("userId"),
-                code: code,
-                role: "client"
-            })
+            user: localStorage.getItem("userId"),
+            code: code,
+            role: "client"
+        })
             .then((response) => {
                 localStorage.setItem("token", response.data.token);
-                dispatch(hideModal({show: false}))
-                window.location.pathname = "/edit-profile";
+                axios.get(`${baseUrl}/api/v1/client/`, {
+                    headers: {
+                        "Authorization": `Token ${response.data.token}`
+                    }
+                }).then((response) => {
+                    if (response.data.first_name && response.data.last_name) {
+                        dispatch(hideModal({show: false}))
+                    } else {
+                        dispatch(showModals({show: true, status: "referal-code"}));
+                        axios.get(`${baseUrl}/api/v1/mycode/`, {
+                            headers: {
+                                "Authorization": `Token ${localStorage.getItem("token")}`
+                            }
+                        }).then((response) => {
+                            setMyCode(response.data.code);
+                        })
+                    }
+
+                })
+
             })
             .catch((error) => {
                 if (error.response.status === 400) {
@@ -161,10 +210,96 @@ const Modal = () => {
     }
 
     const cencelOrder = () => {
-        webSocked(modalContent.id,reason)
+        webSocked(modalContent.id, reason)
     }
 
+    const checkRefCode = () => {
+        axios.post(`${baseUrl}/api/v1/revoke-code/`, {code: RefCode}, {
+            headers: {
+                "Authorization": `Token ${localStorage.getItem("token")}`
+            }
+        }).then((response) => {
+            dispatch(hideModal({show: false}))
+            let idAlert = Date.now();
+            let alert = {
+                id: idAlert,
+                text: t("referal_alert1"),
+                img: "./images/green.svg",
+                color: "#EDFFFA",
+            };
+            dispatch(addAlert(alert));
+            setTimeout(() => {
+                dispatch(delAlert(idAlert));
+                window.location.pathname = "/edit-profile";
+            }, 5000);
+        }).catch((error) => {
+            if (error.response.data.code === -37) {
+                let idAlert = Date.now();
+                let alert = {
+                    id: idAlert,
+                    text: t("referal_alert2"),
+                    img: "./images/red.svg",
+                    color: "#ffeaea",
+                };
+                dispatch(addAlert(alert));
+                setTimeout(() => {
+                    dispatch(delAlert(idAlert));
+                }, 5000);
+            }
+
+            if (error.response.data.code === -38) {
+                let idAlert = Date.now();
+                let alert = {
+                    id: idAlert,
+                    text: t("referal_alert3"),
+                    img: "./images/red.svg",
+                    color: "#ffeaea",
+                };
+                dispatch(addAlert(alert));
+                setTimeout(() => {
+                    dispatch(delAlert(idAlert));
+                }, 5000);
+            }
+
+            if (error.response.data.code === -39) {
+                let idAlert = Date.now();
+                let alert = {
+                    id: idAlert,
+                    text: t("referal_alert4"),
+                    img: "./images/red.svg",
+                    color: "#ffeaea",
+                };
+                dispatch(addAlert(alert));
+                setTimeout(() => {
+                    dispatch(delAlert(idAlert));
+                }, 5000);
+            }
+        });
+
+
+    }
+
+    const handleCopy = () => {
+        if (myCode) {
+            navigator.clipboard.writeText(myCode)
+                .then(() => {
+                    let idAlert = Date.now();
+                    let alert = {
+                        id: idAlert,
+                        text: t("referal_alert5"),
+                        img: "./images/green.svg",
+                        color: "#EDFFFA",
+                    };
+                    dispatch(addAlert(alert));
+                    setTimeout(() => {
+                        dispatch(delAlert(idAlert));
+                    }, 5000);
+                })
+        }
+    };
+
     useOnKeyPress(checkCode ? CheckCode : HandleLogin, "Enter");
+
     return (
         <CSSTransition
             in={modalContent.show && modalContent.status !== "orders"}
@@ -260,6 +395,43 @@ const Modal = () => {
                             >
                                 {t("login")}
                             </button>
+                        </div>
+                    )}
+
+                    {modalContent.status === "referal-code" && (
+                        <div className="referal-code">
+                            <div className="logo">
+                                <img src="./images/logo2.webp" alt=""/>
+                            </div>
+                            <h1 className="title">
+                                {t("login_text_referal")}
+                            </h1>
+                            <p className="des">
+                                {t("login_des_referal")}
+                            </p>
+
+                            <div className="label">{t("your_code")}</div>
+                            <div className="your-code">
+                                {myCode}
+                                <img onClick={handleCopy} src="./images/copy.png" alt="copy"/>
+                            </div>
+
+                            <div className="label">{t("friend_code")}</div>
+                            <input value={RefCode} onChange={(e) => setRefCode(e.target.value)}
+                                   placeholder={t("friend_input")}
+                                   type="text"/>
+
+                            <button onClick={checkRefCode} disabled={RefCode === ""}
+                                    className={`next-btn ${RefCode === "" ? "disabled" : ""}`}>
+                                {t("referal_button")}
+                            </button>
+
+                            <div onClick={() => {
+                                window.location.pathname = "/edit-profile";
+                                dispatch(hideModal({show: false}))
+                            }} className="skip-button">
+                                {t("skip_button")} >
+                            </div>
                         </div>
                     )}
 
@@ -387,13 +559,13 @@ const Modal = () => {
                         <div className="payment-type">
                             <div className="header">
                                 <h1 className="title">
-                                    To'lov turini tanlang
+                                    {t("payment_type")}
                                 </h1>
                             </div>
                             <div className="radio-buttons">
                                 <label className="label-payment">
                                     <div className="left">
-                                        <img src="./images/cash.png" alt="card" loading="lazy"/>
+                                        <img src="./images/wallet.png" alt="card" loading="lazy"/>
                                         <span>{t("cash")}</span>
                                     </div>
                                     <input
@@ -513,6 +685,65 @@ const Modal = () => {
                             <div onClick={cencelOrder} className="send-btn">
                                 {t("success")}
                             </div>
+                        </div>
+                    )}
+
+                    {modalContent.status === "news" && (
+                        <div className="news">
+                            <div className="cancel-btn">
+                                <img
+                                    onClick={() => {
+                                        dispatch(hideModal({show: false}))
+                                    }}
+                                    src="./images/cancel.webp"
+                                    alt="cancel"/>
+                            </div>
+                            <h1 className="title">
+                                {t("news")}
+                            </h1>
+
+                            {discountList.length > 0 && <div className="discount-box">
+                                <div className="discount-title">
+                                    {t("discount-name")}
+                                </div>
+                                {discountList.map((item, index) => {
+                                    return <div key={index} className="discount-card">
+                                        <div className="date">
+                                            {item.created_at}
+                                        </div>
+                                        <div className="title-dis"><span>10%</span>
+                                            {t("discount-count")}
+                                        </div>
+                                        <div className="desc-dis">
+                                            {t("discount-title")}
+                                            <div className="info">
+                                                {t("discount-main-title")}
+                                            </div>
+                                        </div>
+                                    </div>
+                                })}
+                            </div>}
+
+                            {newsList.length > 0 && <div className="news-box">
+                                <div className="discount-title">
+                                    {t("news-title")}
+                                </div>
+                                {newsList.map((item, index) => {
+                                    return <div key={index} className="discount-card">
+                                        <div className="date">
+                                            {item.created_at}
+                                        </div>
+                                        <div className="title-dis">{item.translations[i18next.language].title}</div>
+                                        <div className="desc-dis">
+                                            {item.translations[i18next.language].content}
+                                        </div>
+                                    </div>
+                                })}
+                            </div>}
+
+                            {newsList.length === 0 && discountList.length === 0 && <div className="no-news">
+                                {t("empty-news")}
+                            </div>}
                         </div>
                     )}
                 </div>
