@@ -16,6 +16,7 @@ import {useDispatch, useSelector} from "react-redux";
 import axios from "axios";
 import {useMediaQuery} from "@mui/material";
 import {useTranslation} from "react-i18next";
+import {Helmet} from "react-helmet"
 
 const libraries = ["places"];
 
@@ -88,6 +89,11 @@ const Dashboard = () => {
     if (!isLoaded) return <Loader/>;
     return (
         <>
+            <Helmet>
+                <title>{t("home-title")}</title>
+                <meta name="description"
+                      content={t("home-des")}/>
+            </Helmet>
             <div className="dashboard-wrapper">
                 <CSSTransition
                     in={modalContent.show && modalContent.status === "orders"}

@@ -107,7 +107,7 @@
   "friend_input": "Enter a referral code",
   "discount": "10% off for you!",
   "more": "More",
-  "referal_alert1": "You have been given a 10% discount!",
+  "referal_alert1": "10% discount for your friend!",
   "referal_alert2": "You cannot activate your code!",
   "referal_alert3": "Invalid referral code!",
   "referal_alert4": "You can only activate one code at a time!",
@@ -119,5 +119,8 @@
   "empty-news": "No discounts or news available.",
   "location-error": "Addresses cannot be in the same region!",
   "news-title": "News",
-  "discount-name": "Discounts available to you"
+  "discount-name": "Discounts available to you",
+  "home-title": "Interregional taxi, ADA TAXI - Fast, Convenient and Reliable Taxi Service throughout Uzbekistan",
+  "home-des": "ADA TAXI is a modern application that combines interregional transportation, postal deliveries and travel services on a single platform. We connect drivers and customers safely, quickly and conveniently. No need to wait at the pick-ups - getting on the road with ADA is easy, reliable and efficient."
+
 }

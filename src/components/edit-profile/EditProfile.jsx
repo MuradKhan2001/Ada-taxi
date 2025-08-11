@@ -7,6 +7,7 @@ import {showModals} from "../../redux/ModalContent";
 import axios from "axios";
 import {addAlert, delAlert} from "../../redux/AlertsBox";
 import {useTranslation} from "react-i18next";
+import {Helmet} from "react-helmet";
 
 
 const EditProfile = () => {
@@ -91,6 +92,11 @@ const EditProfile = () => {
 
     return (
         <div className="edit-profile-wrapper">
+            <Helmet>
+                <title>{t("home-title")}</title>
+                <meta name="description"
+                      content={t("home-des")}/>
+            </Helmet>
             <div className="top-side">
                 <Header/>
             </div>

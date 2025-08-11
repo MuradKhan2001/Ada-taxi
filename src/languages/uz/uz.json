@@ -107,7 +107,7 @@
   "friend_input": "Referal raqam kiriting",
   "discount": "Siz uchun 10% lik chegirla berildi!",
   "more": "Batafsil",
-  "referal_alert1": "Siz uchun 10% lik chegirma berildi!",
+  "referal_alert1": "Do'stingiz uchun 10% lik chegirma berildi!",
   "referal_alert2": "Siz o'zingizning kodingizni faollashtira olmaysiz!",
   "referal_alert3": "Referal kod noto'gri!",
   "referal_alert4": "Faqat bir matta kodni faollashtira olasiz!",
@@ -119,5 +119,8 @@
   "discount-title": "Sizda hozirda Ada Taxi ilovasida 1 martalik 10% chegirmali safar imkoniyati mavjud!",
   "discount-main-title": "Foydalanish juda oddiy — buyurtma berishda chegirma avtomatik tarzda qo‘llaniladi.",
   "empty-news": "Chegirmalar va yangiliklar mavjud emas.",
-  "location-error": "Manzillar bir xil viloyatda bo'lishi mumkin emas!"
+  "location-error": "Manzillar bir xil viloyatda bo'lishi mumkin emas!",
+
+  "home-title": "Viloyatlararo taksi, ADA TAXI – Tez, Qulay va Ishonchli Taksi Xizmati O‘zbekiston bo‘ylab",
+  "home-des": "ADA TAXI — bu viloyatlararo qatnov, pochta jo‘natmalari va sayohat xizmatlarini yagona platformada birlashtirgan zamonaviy ilova. Biz haydovchilar va mijozlarni xavfsiz, tezkor va qulay tarzda bog‘laymiz. Pitaklarda kutishga hojat yo‘q — ADA bilan yo‘lga chiqish oson, ishonchli va samarali."
 }
