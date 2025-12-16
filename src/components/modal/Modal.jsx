@@ -162,6 +162,7 @@ const Modal = () => {
                 }).then((response) => {
                     if (response.data.first_name && response.data.last_name) {
                         dispatch(hideModal({show: false}))
+                        window.location.reload();
                     } else {
                         dispatch(showModals({show: true, status: "referal-code"}));
                         axios.get(`${baseUrl}/api/v1/mycode/`, {

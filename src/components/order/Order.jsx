@@ -247,7 +247,9 @@ const Order = () => {
                     }
                 }).then((response) => {
                     setPrice_list(response.data)
-                    setActive_price(response.data[0].category?.id)
+                    if (!active_price){
+                        setActive_price(response.data[0].category?.id)
+                    }
                 }).catch((error) => {
                     if (error.response.data.code === -40) {
                         dispatch(clearDropOffLocations())
