@@ -8,9 +8,11 @@ import axios from "axios";
 import {addAlert, delAlert} from "../../redux/AlertsBox";
 import {useTranslation} from "react-i18next";
 import {Helmet} from "react-helmet";
+import {useMediaQuery} from "@mui/material";
 
 
 const EditProfile = () => {
+    const isMobile = useMediaQuery("(max-width: 1024px)");
     const {t} = useTranslation();
     const baseUrl = useSelector((store) => store.baseUrl.data)
     const navigate = useNavigate();
@@ -134,7 +136,9 @@ const EditProfile = () => {
                         </div>
                     </div>
                     <div className="buttons">
-                        <div onClick={() => navigate("/profile")} className="cancel-btn">
+                        <div onClick={() => {
+                            isMobile ? navigate("/") : navigate("/profile")
+                        }} className="cancel-btn">
                             {t("cancel_order")}
                         </div>
                         <div onClick={saveProfile} className="save-btn">

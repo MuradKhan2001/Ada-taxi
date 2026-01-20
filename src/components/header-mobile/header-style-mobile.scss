@@ -1,0 +1,212 @@
+.header-wrapper-mobile {
+  width: 100%;
+  height: 100%;
+
+  .center-box {
+    margin-top: 20px;
+    width: 100%;
+    background-color: rgba(200, 204, 203, 0.18);
+    border-radius: 8px;
+    display: block;
+    padding: 16px;
+
+    .menu-item {
+      margin-top: 18px;
+      color: rgba(20, 20, 20, 1);
+      font-size: 15px;
+      font-weight: 500;
+      line-height: 20px;
+      letter-spacing: -0.01em;
+      text-decoration-skip-ink: none;
+      cursor: pointer;
+      margin-right: 24px;
+      display: flex;
+      align-items: center;
+
+      img {
+        width: 24px;
+        margin-right: 10px;
+      }
+
+      &:first-child {
+        margin-top: 0;
+      }
+    }
+  }
+
+  .header-buttons {
+    margin-top: 15px;
+
+    .information-profile {
+      width: 100%;
+      height: max-content;
+      background-color: white;
+      border-radius: 16px;
+
+      .photo-client {
+        margin: 10px auto;
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba(200, 204, 203, 0.3);
+        border: 1px solid rgba(198, 198, 198, 0.1);
+        overflow: hidden;
+
+        img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+      }
+
+      .name {
+        text-align: center;
+        font-size: 20px;
+        color: rgba(20, 20, 20, 1);
+        font-weight: 700;
+      }
+
+      .information {
+        margin-top: 10px;
+        width: 100%;
+        padding: 10px 15px;
+        background-color: rgba(200, 204, 203, 0.18);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+
+        .rate {
+          display: flex;
+          align-items: center;
+
+          .label {
+            color: rgba(113, 116, 120, 1);
+            font-size: 13px;
+          }
+
+          .info {
+            margin-left: 5px;
+            display: flex;
+            align-items: center;
+            color: rgba(20, 20, 20, 1);
+            font-weight: 500;
+            font-size: 15px;
+
+            img {
+              width: 15px;
+              margin-right: 5px;
+            }
+          }
+        }
+
+        .line {
+          width: 1px;
+          height: 15px;
+          background-color: rgba(103, 104, 103, 0.18);
+          margin-right: 10px;
+          margin-left: 10px;
+        }
+
+        .count {
+          display: flex;
+          align-items: center;
+
+          .label {
+            color: rgba(113, 116, 120, 1);
+            font-size: 13px;
+          }
+
+          .info {
+            margin-left: 10px;
+            display: flex;
+            align-items: center;
+            color: rgba(20, 20, 20, 1);
+            font-weight: 500;
+            font-size: 15px;
+          }
+
+        }
+
+        .lef-code {
+          .label {
+            color: rgba(113, 116, 120, 1);
+            font-size: 12px;
+          }
+
+          .your-code {
+            margin: 0 auto;
+            margin-top: 6px;
+            width: max-content;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+
+            img {
+              &:hover {
+                transform: scale(1.1);
+              }
+
+              cursor: pointer;
+              margin-left: 12px;
+              width: 20px;
+              transition: .3s;
+            }
+          }
+        }
+      }
+
+      .contact {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        border-radius: 8px;
+
+        .info {
+          color: rgba(20, 20, 20, 1);
+          font-size: 15px;
+          font-weight: 500;
+        }
+      }
+
+      .buttons {
+        margin-top: 20px;
+        width: 100%;
+        background-color: rgba(200, 204, 203, 0.18);
+        border-radius: 8px;
+
+        .item {
+          height: 55px;
+          width: 100%;
+          display: flex;
+          align-items: center;
+          color: rgba(20, 20, 20, 1);
+          font-size: 15px;
+          font-weight: 500;
+          cursor: pointer;
+          padding-left: 16px;
+          padding-right: 16px;
+
+          img {
+            width: 24px;
+            margin-right: 10px;
+
+          }
+
+        }
+
+        .line {
+          margin: 0 auto;
+          width: 90%;
+          height: 1px;
+          background-color: rgba(103, 104, 103, 0.18);
+        }
+      }
+
+    }
+  }
+}

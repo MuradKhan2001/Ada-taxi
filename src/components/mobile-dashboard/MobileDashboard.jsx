@@ -1,6 +1,5 @@
 import React, {useState, useMemo, useEffect, useRef} from "react";
 import "./style-dashboard.scss";
-import Header from "../header/Header";
 import {
     GoogleMap,
     MarkerF,
@@ -9,22 +8,24 @@ import {
 import {GOOGLE_MAPS_API_KEY} from "./googleMapsApi";
 import i18next from "i18next";
 import Loader from "../loader/Loader";
-import Order from "../order/Order";
 import {CSSTransition} from "react-transition-group";
 import {hideModal, showModals} from "../../redux/ModalContent";
+import {hide, show} from "../../redux/ShowMenu";
 import {useDispatch, useSelector} from "react-redux";
 import axios from "axios";
-import {useMediaQuery} from "@mui/material";
 import {useTranslation} from "react-i18next";
 import {Helmet} from "react-helmet"
-import MobileDashboard from "../mobile-dashboard/MobileDashboard";
+import HeaderMobile from "../header-mobile/HeaderMobile";
+import Dropdown from "react-bootstrap/Dropdown";
+import OrderMobile from "../order-mobile/OrderMobile";
 
 const libraries = ["places"];
 
-const Dashboard = () => {
+const MobileDashboard = () => {
     const {t} = useTranslation();
     const baseUrl = useSelector((store) => store.baseUrl.data)
     const DriverLocation = useSelector((store) => store.DriverLocation.data)
+    const showMenu = useSelector((store) => store.ShowHideMenu.data)
     // const [invalidService, setInvalidService] = useState("finished");
     const [showModal, setShowModal] = useState(false);
     const [center, setCenter] = useState();
@@ -33,6 +34,7 @@ const Dashboard = () => {
     const nodeRef = useRef(null);
     const [history, setHistory] = useState([]);
     const [order_info, setOrder_info] = useState({});
+    const [viewOrder, setViewOrder] = useState(true);
 
     const selectAddressIcon = {
         url: "./images/address.png",
@@ -82,6 +84,28 @@ const Dashboard = () => {
         []
     );
 
+    const language = [
+        {
+            code: "uz",
+            name: "O'zbek tili",
+            country_code: "uz",
+        },
+        {
+            code: "en",
+            name: "English language",
+            country_code: "en",
+        },
+        {
+            code: "ru",
+            name: "Pусский язык",
+            country_code: "ru",
+        },
+    ];
+    const changeLanguage = (code) => {
+        localStorage.setItem("lng", code);
+        i18next.changeLanguage(code);
+    };
+
     const showModalContent = (status) => {
         dispatch(showModals({show: true, status: status}));
     };
@@ -94,7 +118,7 @@ const Dashboard = () => {
                 <meta name="description"
                       content={t("home-des")}/>
             </Helmet>
-            <div className="dashboard-wrapper">
+            <div className="dashboard-wrapper-mobile">
                 <CSSTransition
                     in={modalContent.show && modalContent.status === "orders"}
                     nodeRef={nodeRef}
@@ -370,8 +394,65 @@ const Dashboard = () => {
                     </div>
                 </CSSTransition>
 
+
+                {showMenu.show && <div className="header-mobile">
+                    <div className="cancel-btn">
+                        <img onClick={() => dispatch(hide({show: false}))} src="./images/stroke-cancel-max.png"
+                             alt="x"/>
+
+                        <div className="language-btn">
+                            <Dropdown>
+                                <Dropdown.Toggle variant="success" id="dropdown-basic">
+                                    <img className="globe" src="./images/globe-alt.webp" alt="language" loading="lazy"/>
+                                    <div className="name">
+                                        {language.map((item, index) => {
+                                            return (
+                                                <div key={index}>
+                                                    {i18next.language === item.code ? item.name : ""}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </Dropdown.Toggle>
+                                <Dropdown.Menu>
+
+                                    {language.map(({code, name, country_code}) => (
+                                        <Dropdown.Item key={country_code}
+                                                       onClick={() => changeLanguage(code)}>{name}</Dropdown.Item>
+                                    ))}
+
+                                </Dropdown.Menu>
+                            </Dropdown>
+                        </div>
+                    </div>
+                    <HeaderMobile/>
+                </div>}
+
                 <div className="top-side">
-                    <Header/>
+                    <div onClick={() => dispatch(show({show: true}))} className="header-menu">
+                        <img src="./images/menu.png" alt="burger-menu"/>
+                    </div>
+
+                    <div className="header-sides">
+                        <div className="sides-item">
+                            <div onClick={() => {
+                                setViewOrder(true)
+                            }} className={`${viewOrder ? "active-side" : ""}`}>
+                                {t("order-side")}
+                            </div>
+                        </div>
+                        <div className="sides-item">
+                            <div onClick={() => {
+                                setViewOrder(false)
+                            }} className={`${!viewOrder ? "active-side" : ""}`}>
+                                {t("map-side")}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="header-menu">
+                        <img onClick={() => showModalContent("news")} src="./images/bell.png" alt="bell"/>
+                    </div>
                 </div>
 
                 <div className="bottom-side">
@@ -395,7 +476,7 @@ const Dashboard = () => {
                             />)}
 
                     </GoogleMap>
-                    <Order/>
+                    {viewOrder ? <OrderMobile/> : ""}
                     <div className="app-box">
                         <div className="top-side-app">
                             <a target="_blank" href="https://apps.apple.com/us/app/adataxi/id6744370881"
@@ -431,52 +512,8 @@ const Dashboard = () => {
                     </div>
                 </div>
             </div>
-            <div className="mobil-device">
-                <MobileDashboard/>
-                {/*<div className="logo">*/}
-                {/*    <img src="./images/logo3.webp" alt="logo"/>*/}
-                {/*</div>*/}
-                {/*<div className="des">*/}
-                {/*    "Mijoz Ada Taxi" platformasini*/}
-                {/*    <span> PLANSHET </span>*/}
-                {/*    va*/}
-                {/*    <span> MOBIL TELEFON </span>*/}
-                {/*    qurilmalari orqali foydalanish uchun App store yoki Play marketdan "Ada taxi" ilovasini yuklab*/}
-                {/*    olishingiz mumkin!*/}
-                {/*</div>*/}
-                {/*<div className="app-box">*/}
-                {/*    <div className="top-side-app">*/}
-                {/*        <a target="_blank" href="https://apps.apple.com/us/app/adataxi/id6744370881"*/}
-                {/*           className="button">*/}
-                {/*            <div className="left">*/}
-                {/*                <img src="./images/apple.webp" alt="apple" loading="lazy"/>*/}
-                {/*            </div>*/}
-                {/*            <div className="right">*/}
-                {/*                <div className="top-text">Download on the</div>*/}
-                {/*                <b>App store</b>*/}
-                {/*            </div>*/}
-                {/*        </a>*/}
-                {/*        <a target="_blank" href="https://play.google.com/store/apps/details?id=uz.adataxi.client"*/}
-                {/*           className="button">*/}
-                {/*            <div className="left">*/}
-                {/*                <img src="./images/google.webp" alt="google" loading="lazy"/>*/}
-                {/*            </div>*/}
-                {/*            <div className="right">*/}
-                {/*                <div className="top-text">GET IT ON</div>*/}
-                {/*                <b>Google Play</b>*/}
-                {/*            </div>*/}
-                {/*        </a>*/}
-                {/*    </div>*/}
-                {/*    <div className="bottom-side-app">*/}
-                {/*        <a target="_blank" href="https://adataxi.uz/offer-app">*/}
-                {/*            © 2025 ООО «ADA TAXI»*/}
-                {/*            {t("offer")}*/}
-                {/*        </a>*/}
-                {/*    </div>*/}
-                {/*</div>*/}
-            </div>
         </>
     );
 };
 
-export default Dashboard;
+export default MobileDashboard;
